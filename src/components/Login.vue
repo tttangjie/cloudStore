@@ -183,7 +183,7 @@
                   this.$store.state.phone = res.data.phone;
                   sessionStorage.userToken =  this.$store.state.token;
                   console.log(sessionStorage.userToken);
-                  this.$router.push('/home');
+                  this.$router.push('/home/all');
                 }
                 else if( res.data.code === 1) {
                   if(res.data.msg === "Bad credentials")
@@ -214,7 +214,7 @@
                   this.$store.state.username = res.data.username;
                   this.$store.state.phone = res.data.phone;
                   sessionStorage.userToken =  this.$store.state.token;
-                  this.$router.push('/home');
+                  this.$router.push('/home/all');
                 }
                 else if (res.data.code === 1) {
                   this.drawMsg('error', '短信验证码错误');

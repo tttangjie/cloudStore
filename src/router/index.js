@@ -39,6 +39,7 @@ export default new Router({
       children:[
         {
           path:'/home/all',
+          name:'All',
           component: (resolve) => require(['../components/user/aboutFile/AllFile'], resolve),
         }
       ]
@@ -60,3 +61,4 @@ axios.interceptors.request.use( (config) => {
 },  (error) => {
   return Promise.reject(error);
 });
+

@@ -30,7 +30,9 @@
           </el-menu>
         </el-aside>
       <el-main>
+        <transition name="fade">
         <router-view> </router-view>
+        </transition>
       </el-main>
     </el-container>
 </template>

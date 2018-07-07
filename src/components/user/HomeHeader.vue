@@ -72,7 +72,7 @@
     width: 100%;
     height: 100%;
     background: #313131;
-    min-width: 750px;
+    min-width: 850px;
   }
   .head_title {
     display: inline-flex;
@@ -121,7 +121,7 @@
     border-radius: 90px;
     border: #FFFFFF solid 1px;
   }
-  .head_username {
+  .head_username  {
     font-size: 13px;
     margin: 21px 10px;
     max-width: 120px;
