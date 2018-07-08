@@ -182,6 +182,7 @@
                   this.$store.state.username = res.data.username;
                   this.$store.state.phone = res.data.phone;
                   sessionStorage.userToken =  this.$store.state.token;
+                  sessionStorage.setItem('username',this.$store.state.username);
                   console.log(sessionStorage.userToken);
                   this.$router.push('/home/all');
                 }
@@ -214,6 +215,7 @@
                   this.$store.state.username = res.data.username;
                   this.$store.state.phone = res.data.phone;
                   sessionStorage.userToken =  this.$store.state.token;
+                  sessionStorage.setItem('username',this.$store.state.username);
                   this.$router.push('/home/all');
                 }
                 else if (res.data.code === 1) {

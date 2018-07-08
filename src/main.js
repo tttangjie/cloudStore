@@ -8,9 +8,13 @@ import {store} from "./vuex/store";
 import global_ from '../static/config/global'
 import axios from "axios/index";
 
+import PDFView from './components/user/aboutFile/PDFView'
+
 Vue.config.productionTip = false;
 Vue.prototype.GLOBAL = global_;
 axios.defaults.baseURL = global_.BASE_URL;
+
+Vue.component(PDFView.name, PDFView)
 
 /* eslint-disable no-new */
 new Vue({

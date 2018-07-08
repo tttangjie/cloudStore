@@ -1,5 +1,6 @@
 <template>
   <div>
+    <el-button @click="showDialogDiv">Test</el-button>
     <!--全部文件上面一排工具菜单-->
     <div>
       <div class="all_operate">
@@ -12,6 +13,9 @@
         </el-button>
         <el-button icon="el-icon-download" @click="downloadFiles">
           下载
+        </el-button>
+        <el-button icon="el-icon-delete" @click="showDeleteFile">
+          删除
         </el-button>
       </div>
       <div class="search_and_sort">
@@ -102,13 +106,13 @@
           </template>
       </el-table-column>
       <el-table-column
-        prop="size"
+        prop="len"
         label="大小"
         width="120"
         sortable>
       </el-table-column>
       <el-table-column
-        prop="date"
+        prop="time"
         label="修改日期"
         width="180"
         sortable>
@@ -117,6 +121,7 @@
 
 
     <div>
+      <!--文件加入回收站的Dialog-->
       <el-dialog
         title="确认删除"
         :visible.sync="showDeleteFileDialog"
@@ -125,39 +130,70 @@
         <span>确认把所选文件放入回收站吗？</span>
         <span slot="footer" class="dialog-footer">
           <el-button @click="showDeleteFileDialog = false">取 消</el-button>
-          <el-button type="primary" @click="deleteFile">确 定</el-button>
+          <el-button type="primary" @click="deleteFiles">确 定</el-button>
         </span>
+      </el-dialog>
+
+      <!--目录树的Dialog-->
+      <el-dialog
+        title="选择文件夹"
+        :visible.sync="showDialog"
+        width="35%"
+        center>
+        <span>
+          <DirectoryTree></DirectoryTree>
+        </span>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="showDeleteFileDialog = false">取 消</el-button>
+          <el-button type="primary" @click="">确 定</el-button>
+        </span>
+      </el-dialog>
+
+      <!--预览PDF文件的Dialog-->
+      <el-dialog
+        :visible.sync="showPDF"
+        width="72%"
+        :close-on-click-modal=false
+        :close-on-press-escape=false
+        center>
+        <pdf-view  :pdfurl="pdfurl"> </pdf-view>
       </el-dialog>
     </div>
   </div>
 </template>
 
 <script>
-
+  import DirectoryTree from './DirectoryTree'
   export default {
     name: "all-file",
+    components:{
+      DirectoryTree,
+    },
     data(){
       return{
+        pdfurl:'//cdn.mozilla.net/pdfjs/tracemonkey.pdf',
+        showDialog:false,/////test
+        username:sessionStorage.getItem('username'),
         searchContent:'',
         fileTotal:0,
         /*fileList中的path 和 BreadList中的path不是同一个含义*/
-        breadList:[{path:'/',name:'全部文件'},/*{path:'/test1',name:'test1'},{path:'/test1/test2',name:'test2'}*/],
+        breadList:[{path:'/'+sessionStorage.getItem('username'),name:'全部文件'},/*{path:'/test1',name:'test1'},{path:'/test1/test2',name:'test2'}*/],
         fileList:[
           {
             type:'folder',
             fileName:'file3',
             path:'/file3',
             isDir:'文件夹',
-            date:'2018-03-02',
-            size:0,
+            time:'2018-03-02',
+            len:0,
           },
           {
             type:'doc',
             fileName:'file4.doc',
             path:'/file4.doc',
             isDir:'文件',
-            date:'2015-01-03',
-            size:0,
+            time:'2015-01-03',
+            len:0,
           }],
         showBackToPre:false,
         hoverFilePath:'',   //鼠标进入时的文件路径
@@ -168,9 +204,20 @@
         showRenameDiv:false,  //重命名的区域的显现
         renameFileName:'',//重命名编辑中的文件名
         isRename:true,
+        showPDF:false,
       }
     },
+
     methods:{
+      drawMsg(type, content) {
+        this.$message({
+          message:content,
+          type: type
+        });
+      },
+      showDialogDiv(){
+        this.showDialog = true;
+      },
       /*创建n位的随机数*/
       randomNum(n){
         let rnd="";
@@ -180,43 +227,43 @@
       },
       /*新建文件夹*/
       newFolderPushToFileList(){
+        this.renameFileName = '新建文件夹';
         this.fileList.unshift({fileName:'新建文件夹',size:'0',path:this.breadList[this.breadList.length-1].path,isDir:'文件夹',date:'',type:'folder'});
-        let filename = this.randomNum(4)
-        if(this.breadList[this.breadList.length-1].path === '/')
-          this.fileList[0].path+=filename;
-        else
-          this.fileList[0].path+=filename;
+        let filename = this.randomNum(4);
+        this.fileList[0].path+=filename;
         this.$refs.fileSelection.clearSelection();
         this.$refs.fileSelection.toggleRowSelection(this.fileList[0]);
         this.$refs.fileSelection.setCurrentRow(this.fileList[0]);
         this.showRenameDiv = true;
         this.clickFile = this.fileList[0].path;
-        this.renameFileName = '新建文件夹';
         this.isRename = false;
       },
       createNewFolder(newFilename){
-        console.log(this.breadList[this.breadList.length-1]);
-        /*this.$axios.post('/TestPlatform/mkdir',{
-          pPath:'/user'+ this.breadList[this.breadList.length-1].path,
+        let pPath = this.breadList[this.breadList.length-1].path;
+        this.$axios.post('/mkdir',{
+          pPath:pPath,
           fileName:newFilename
         })
           .then(function (res) {
-            console.log(res)
-
-            this.isRename = true;
+            if(res.data.status === '创建成功') {
+              this.drawMsg('success','文件新建成功');
+              this.showRenameDiv = false;
+              this.isRename = true;
+              this.loadFileList();
+            }
+            else if (res.data.status === '文件已存在！')
+              this.drawMsg('error','文件名已存在请重新输入');
           }.bind(this))
           .catch(function (err) {
             console.log(err)
-          })*/
+          })
       },
       /*下载文件*/
-      downloadFile(file,type){
-        // user为用户名
-        let username = 'user';
+      downloadFile(path,type){
         if(type === 'folder')
-          window.location.href = this.GLOBAL.BASE_URL+'/TestPlatform/downloadFolder?srcName=/'+ username +file;
+          window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder?srcName='+ path;
         else
-          window.location.href = this.GLOBAL.BASE_URL+'/TestPlatform/download?srcName=/'+ username +file;
+          window.location.href = this.GLOBAL.BASE_URL+'/download?srcName='+ path;
       },
       downloadFiles(){
         console.log(this.fileSelection)
@@ -227,23 +274,35 @@
         }
         console.log(files)
 /*
-        window.location.href = this.GLOBAL.BASE_URL+'/TestPlatform/downloadFolder? jsonSrcName ＝/'+ username +files;
+        window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝/'+ username +files;
 */
-      console.log(this.GLOBAL.BASE_URL+'/TestPlatform/downloadFolder? jsonSrcName ＝/'+ username +JSON.stringify(files))
+      console.log(this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝/'+ username +JSON.stringify(files))
       },
       /*通过breadList中的path加载目录*/
       loadDir(path){
-        console.log(path)
         for(var i = this.breadList.length-1; i >= 0; i--) {
           if(this.breadList[i].path !== path) {
             this.breadList.pop();
           }
           else break;
         }
+        this.loadFileList();
         if(this.breadList.length > 1)
           this.showBackToPre = true;
         else
           this.showBackToPre = false;
+      },
+      /*加载文件列表*/
+      loadFileList(){
+        this.$axios.post('/dirLook',{
+          muluName:this.breadList[this.breadList.length-1].path,
+        })
+          .then(function (res) {
+            this.fileList = res.data.result;
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+          })
       },
       /*预览文件时在面包屑上加入新的目录*/
       addBreadList(path, name) {
@@ -282,27 +341,71 @@
           this.showDeleteFileDialog = true;
       },
       /*删除文件*/
-      deleteFile(){
-        console.log(this.clickFile)
+      showDeleteFile(){
+        console.log(this.fileSelection);
+        if(this.fileSelection.length === 0) {
+          this.drawMsg('warning', '请先选择文件');
+        }
+        else
+          this.showDeleteFileDialog = true;
+      },
+      deleteFiles(){
+        this.clickFiles = [];
+        let postStirng = '';
+        for(let i = 0 ; i<this.fileSelection.length; i++) {
+/*
+          目前传递数组只能以字符串拼接方式传参
+          数组直接传递未能成功
+          传递数组方式有待商榷
+*/
+          this.clickFiles.push(this.fileSelection[i].path);
+          if(i!==0)
+            postStirng += ','
+          postStirng += this.fileSelection[i].path;
+        }
+        this.$axios.post('/delete' ,
+          {
+            header:{'content-type':'application/json'}
+          },
+          {
+            params:{
+              fileDelPaths:postStirng
+            }
+          })
+          .then(function (res) {
+            this.drawMsg('success','删除成功！');
+            this.loadFileList();
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+          })
         this.showDeleteFileDialog = false;
       },
       /*重命名文件*/
       renameFile(oldPath, newFileName) {
         if(!this.isRename) {
-          this.createNewFolder();
+          this.createNewFolder(this.renameFileName);
           return;
         }
-        var newPath;
-        if(this.breadList[this.breadList.length-1].path === '/')
-          newPath = this.breadList[this.breadList.length-1].path+newFileName;
-        else
-          newPath = this.breadList[this.breadList.length-1].path + '/' +newFileName;
-        console.log(oldPath);
-        console.log(newPath);
+        this.$axios.post('/rename',{
+          oldPath:oldPath,
+          newName:newFileName,
+        })
+          .then(function (res) {
+            if(res.data.status === '文件已经存在！')
+              this.drawMsg('error','文件名已存在！');
+            else if(res.data.status === '修改成功') {
+              this.drawMsg('success','文件名修改成功');
+              this.showRenameDiv = false;
+              this.loadFileList();
+            }
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+          })
       },
       cancelRename() {
         this.showRenameDiv=false;
-        console.log(this.fileList)
         if(!this.isRename) {
           this.isRename = true;
           this.fileList.shift();
@@ -315,22 +418,24 @@
           this.addBreadList(path, name);
         }
         else {
-
+          this.$axios.post('/ppt2Pdf',{
+            input:path
+          })
+            .then(function (res) {
+              //this.showPDF = true;
+              console.log(res)
+            }.bind(this))
+            .catch(function (err) {
+              this.drawMsg('error','文件预览失败')
+              console.log(err)
+            }.bind(this))
         }
       }
     },
     mounted(){
+      console.log(this.breadList)
       this.loadDir(this.breadList[this.breadList.length-1].path);
-      /*this.$axios.post('/TestPlatform/dirLook',{
-        muluName:'/user'+this.breadList[this.breadList.length-1].path,
-      })
-        .then(function (res) {
-          console.log(res)
-          this.fileList = res.data.result;
-        }.bind(this))
-        .catch(function (err) {
-          console.log(err)
-        })*/
+      this.loadFileList();
     },
   }
 </script>
@@ -432,6 +537,7 @@
     margin-left: 5px;
     font-size: 14px;
     line-height: 32px;
+    cursor: pointer;
   }
   .file_operate{
     margin-top: -16px;
