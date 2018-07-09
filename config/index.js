@@ -12,10 +12,15 @@ module.exports = {
     assetsPublicPath: '/',
     /*前端解决跨域问题*/
     proxyTable: {
-/*      "/api": {
+     /* "/api": {
         target: "http://192.168.100.131:8080",
         pathRewrite: {"^/api" : ""}
-      }*/
+      },*/
+      /*"/showPdf": {
+        target: "http://192.168.100.152:8081",
+        changeOrigin: true,
+        pathRewrite: {"^/api" : ""}
+      },*/
     },
 
     // Various Dev Server settings

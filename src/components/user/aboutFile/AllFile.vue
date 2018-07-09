@@ -1,6 +1,5 @@
 <template>
   <div>
-    <el-button @click="showDialogDiv">Test</el-button>
     <!--全部文件上面一排工具菜单-->
     <div>
       <div class="all_operate">
@@ -24,7 +23,7 @@
           v-model="searchContent">
           <i slot="suffix" class="el-input__icon el-icon-search search_icon"></i>
         </el-input>
-        <i class="el-icon-sort sort_icon"></i>
+        <!--<i class="el-icon-sort sort_icon"></i>-->
         <i class="fa fa-reorder sort_icon"></i>
       </div>
     </div>
@@ -61,7 +60,8 @@
       @selection-change="handleFileSelect"
       @cell-mouse-enter="handleMouseEnter"
       @cell-mouse-leave="handleMouseLeave"
-      @current-change="handleCurrentClick">
+      @current-change="handleCurrentClick"
+      @cell-dblclick="enterOrPreview(clickFile, fileSelection[0].type, fileSelection[0].fileName)">
       <el-table-column
         type="selection"
         width="55">
@@ -106,10 +106,11 @@
           </template>
       </el-table-column>
       <el-table-column
-        prop="len"
+        prop="size"
         label="大小"
         width="120"
-        sortable>
+        sortable
+        sort-by="len">
       </el-table-column>
       <el-table-column
         prop="time"
@@ -118,7 +119,6 @@
         sortable>
       </el-table-column>
     </el-table>
-
 
     <div>
       <!--文件加入回收站的Dialog-->
@@ -135,19 +135,13 @@
       </el-dialog>
 
       <!--目录树的Dialog-->
-      <el-dialog
-        title="选择文件夹"
-        :visible.sync="showDialog"
-        width="35%"
-        center>
-        <span>
-          <DirectoryTree></DirectoryTree>
-        </span>
-        <span slot="footer" class="dialog-footer">
-          <el-button @click="showDeleteFileDialog = false">取 消</el-button>
-          <el-button type="primary" @click="">确 定</el-button>
-        </span>
-      </el-dialog>
+      <DirectoryTree
+        :show="showTreeDialog"
+
+        v-on:showTreeDialogFalse="showTreeDialog = false"
+        v-on:confirmSelectPath="moveAndCopy">
+      </DirectoryTree>
+
 
       <!--预览PDF文件的Dialog-->
       <el-dialog
@@ -155,6 +149,7 @@
         width="72%"
         :close-on-click-modal=false
         :close-on-press-escape=false
+        @close="deletePDF"
         center>
         <pdf-view  :pdfurl="pdfurl"> </pdf-view>
       </el-dialog>
@@ -171,8 +166,8 @@
     },
     data(){
       return{
-        pdfurl:'//cdn.mozilla.net/pdfjs/tracemonkey.pdf',
-        showDialog:false,/////test
+        pdfurl:'',
+        showTreeDialog:false,/////test
         username:sessionStorage.getItem('username'),
         searchContent:'',
         fileTotal:0,
@@ -186,6 +181,7 @@
             isDir:'文件夹',
             time:'2018-03-02',
             len:0,
+            size:'0KB',
           },
           {
             type:'doc',
@@ -194,6 +190,7 @@
             isDir:'文件',
             time:'2015-01-03',
             len:0,
+            size:'0KB'
           }],
         showBackToPre:false,
         hoverFilePath:'',   //鼠标进入时的文件路径
@@ -204,7 +201,8 @@
         showRenameDiv:false,  //重命名的区域的显现
         renameFileName:'',//重命名编辑中的文件名
         isRename:true,
-        showPDF:false,
+        showPDF:false ,
+        moveOrCopy:'',
       }
     },
 
@@ -214,9 +212,6 @@
           message:content,
           type: type
         });
-      },
-      showDialogDiv(){
-        this.showDialog = true;
       },
       /*创建n位的随机数*/
       randomNum(n){
@@ -339,6 +334,14 @@
           this.showRenameDiv = true;
         else if(command === 'delete')
           this.showDeleteFileDialog = true;
+        else if(command === 'move'){
+          this.showTreeDialog = true;
+          this.moveOrCopy = 'move';
+        }
+        else if(command === 'copy'){
+          this.showTreeDialog = true;
+          this.moveOrCopy = 'copy';
+        }
       },
       /*删除文件*/
       showDeleteFile(){
@@ -418,18 +421,64 @@
           this.addBreadList(path, name);
         }
         else {
-          this.$axios.post('/ppt2Pdf',{
+          console.log(path)
+          this.$axios.post('/file2Pdf',
+            {
             input:path
           })
             .then(function (res) {
-              //this.showPDF = true;
-              console.log(res)
+              console.log(res.data.result)
+              this.pdfurl = res.data.result;
+              this.showPDF = true;
             }.bind(this))
             .catch(function (err) {
               this.drawMsg('error','文件预览失败')
               console.log(err)
             }.bind(this))
         }
+      },
+      /*删除预览的PDF文件*/
+      deletePDF(){
+        this.$axios.post('/pdfDelete',{
+          deletePath:this.pdfurl,
+        })
+          .then(function (res) {
+
+          })
+          .catch(function (err) {
+            console.log(err)
+          })
+      },
+      /*移动或复制*/
+      moveAndCopy(newFatherPath){
+        if(this.moveOrCopy === 'move')
+          this.moveToAnotherPlace(newFatherPath);
+
+      },
+      /*移动*/
+      moveToAnotherPlace(newFatherPath){
+        this.$axios.post('/move',
+          {
+            oldDirPath:this.clickFile,
+            newFatherPath:newFatherPath,
+          })
+          .then(function (res) {
+            console.log(res)
+            if(res.data.status === '移动成功'){
+              this.drawMsg('success','文件移动成功！')
+              this.loadFileList();
+            }
+            else if (res.data.status === '移动失败') {
+              if(res.data.result === '该文件下已经存在相同名字的文件')
+                this.drawMsg('error', res.data.result);
+              else if(res.data.result === '不能移动到本文件夹')
+                this.drawMsg('error', res.data.result)
+            }
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+            this.drawMsg('error', '文件移动失败！');
+          }.bind(this))
       }
     },
     mounted(){
@@ -453,7 +502,7 @@
     line-height: 64px;
     margin-right: 5px;
     height: 64px;
-    min-width: 285px;
+    min-width: 250px;
   }
   .search_icon:hover{
     color: #3b8cff;

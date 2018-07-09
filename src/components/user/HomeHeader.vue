@@ -53,7 +53,7 @@
       data(){
         return{
           activeIndex:'cStore',
-          username:'拟糖',
+          username:sessionStorage.getItem('username'),
         }
       },
       methods:{

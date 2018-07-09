@@ -21,14 +21,16 @@
     import PDFJS from '../../../../static/pdfjs/build/pdf.js'
     export default {
       name: "pdf-view",
-      props: ['pdfurl'],
+      props: {
+        pdfurl:String,
+      },
       data(){
           return{
             pdfDoc: null, //pdfjs 生成的对象
             pageNum: 1,//
             pageRendering: false,
             pageNumPending: null,
-            scale: 1.5,//放大倍数
+            scale: 1.2,//放大倍数
             page_num: 0,//当前页数
             page_count: 0,//总页数
             maxscale: 2,//最大放大倍数
@@ -106,7 +108,15 @@
           } else {
             this.renderPage(num);
           }
-        }
+        },
+        initPdf(){
+          let vm = this;
+          PDFJS.getDocument(vm.pdfurl).then(function(pdfDoc_) { //初始化pdf
+            vm.pdfDoc = pdfDoc_;
+            vm.page_count = vm.pdfDoc.numPages
+            vm.renderPage(vm.pageNum);
+          });
+        },
       },
       computed:{
         ctx() {
@@ -115,13 +125,13 @@
         }
       },
       mounted(){
-        let vm = this
-        PDFJS.getDocument(vm.pdfurl).then(function(pdfDoc_) { //初始化pdf
-          vm.pdfDoc = pdfDoc_;
-          vm.page_count = vm.pdfDoc.numPages
-          vm.renderPage(vm.pageNum);
-        });
+        this.initPdf();
       },
+      watch:{
+        pdfurl:function () {
+          this.initPdf();
+        }
+      }
 
     }
 </script>

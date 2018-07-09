@@ -12,7 +12,7 @@ Vue.prototype.$axios = axios;
 /*axios.defaults.baseURL = 'http://192.168.100.131:8080';*/
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.withCredentials = true;
-/*axios.defaults.timeout = 10000;*/
+/*axios.defaults.timeout = 6000;*/
 
 Vue.use(Router);
 Vue.use(ElementUI);
