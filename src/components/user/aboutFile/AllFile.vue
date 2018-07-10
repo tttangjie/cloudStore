@@ -10,12 +10,27 @@
           <i class="fa fa-folder-o"></i>
           <span>新建文件夹</span>
         </el-button>
-        <el-button icon="el-icon-download" @click="downloadFiles">
-          下载
+        <el-button icon="el-icon-share">
+          分享
         </el-button>
-        <el-button icon="el-icon-delete" @click="showDeleteFile">
-          删除
-        </el-button>
+        <transition name="el-fade-in-linear">
+          <div v-show="fileSelection.length > 0">
+            <el-button icon="el-icon-download" @click="downloadFiles">
+              下载
+            </el-button>
+            <el-button icon="el-icon-delete" @click="showDeleteFile">
+              删除
+            </el-button>
+            <el-button @click="loadMoveFiles">
+              <i class="fa fa-reply"></i>
+              移动到
+            </el-button>
+            <el-button @click="loadCopyFiles">
+              <i class="fa fa-copy"></i>
+              复制到
+            </el-button>
+          </div>
+        </transition>
       </div>
       <div class="search_and_sort">
         <el-input
@@ -262,16 +277,25 @@
       },
       downloadFiles(){
         console.log(this.fileSelection)
-        let username = 'user';
-        let files = new Array();
-        for(let i = 0; i<this.fileSelection.length; i++) {
-          files.push(this.fileSelection[i].path)
+        if(this.fileSelection.length === 1) {
+          if(this.fileSelection[0].type === 'folder')
+            window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder?srcName='+ this.fileSelection[0].path;
+          else
+            window.location.href = this.GLOBAL.BASE_URL+'/download?srcName='+ this.fileSelection[0].path;
         }
-        console.log(files)
+        else {
+          let postString = '';
+          for(let i = 0 ; i<this.fileSelection.length; i++) {
+            if(i!==0)
+              postString += ','
+            postString += this.fileSelection[i].path;
+          }
+          window.location.href = this.GLOBAL.BASE_URL+'/downloadBatch?paths=' + postString;
+        }
 /*
-        window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝/'+ username +files;
+        window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝'+  postString;
 */
-      console.log(this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝/'+ username +JSON.stringify(files))
+      /*console.log(window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝'+  postString)*/
       },
       /*通过breadList中的path加载目录*/
       loadDir(path){
@@ -313,7 +337,6 @@
       handleCurrentClick(val) {
         if(val === null)
           return;
-        console.log(val);
         this.clickFile = val.path;
         this.$refs.fileSelection.clearSelection();
         this.$refs.fileSelection.toggleRowSelection(this.fileList[this.fileList.indexOf(val)]);
@@ -329,7 +352,6 @@
       },
       /*更多的文件操作*/
       handleMoreComment(command){
-        this.$message('click on item ' + command);
         if(command === 'rename')
           this.showRenameDiv = true;
         else if(command === 'delete')
@@ -344,7 +366,7 @@
         }
       },
       /*删除文件*/
-      showDeleteFile(){
+      /*showDeleteFile(){
         console.log(this.fileSelection);
         if(this.fileSelection.length === 0) {
           this.drawMsg('warning', '请先选择文件');
@@ -354,17 +376,11 @@
       },
       deleteFiles(){
         this.clickFiles = [];
-        let postStirng = '';
+        let postString = '';
         for(let i = 0 ; i<this.fileSelection.length; i++) {
-/*
-          目前传递数组只能以字符串拼接方式传参
-          数组直接传递未能成功
-          传递数组方式有待商榷
-*/
-          this.clickFiles.push(this.fileSelection[i].path);
           if(i!==0)
-            postStirng += ','
-          postStirng += this.fileSelection[i].path;
+            postString += ','
+          postString += this.fileSelection[i].path;
         }
         this.$axios.post('/delete' ,
           {
@@ -372,7 +388,7 @@
           },
           {
             params:{
-              fileDelPaths:postStirng
+              fileDelPaths:postString
             }
           })
           .then(function (res) {
@@ -383,6 +399,36 @@
             console.log(err)
           })
         this.showDeleteFileDialog = false;
+      },*/
+      showDeleteFile(){
+        console.log(this.fileSelection);
+        if(this.fileSelection.length === 0) {
+          this.drawMsg('warning', '请先选择文件');
+        }
+        else
+          this.showDeleteFileDialog = true;
+      },
+      deleteFiles() {
+        let postString = '';
+        for(let i = 0 ; i<this.fileSelection.length; i++) {
+          if(i!==0)
+            postString += ','
+          postString += this.fileSelection[i].path;
+        }
+        this.$axios.post('/user/recycle/insert/all',{
+          oriPaths:postString,
+        })
+          .then(function (res) {
+            if(res.data.msg === '成功'){
+              this.drawMsg('success', '放入回收站成功！');
+              this.loadFileList();
+            }
+            this.showDeleteFileDialog = false;
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err);
+            this.showDeleteFileDialog = false;
+          }.bind(this))
       },
       /*重命名文件*/
       renameFile(oldPath, newFileName) {
@@ -420,14 +466,12 @@
         if(type === 'folder'){
           this.addBreadList(path, name);
         }
-        else {
-          console.log(path)
+        else if(type === 'doc' || type === 'ppt' || type === 'txt' || type === 'code' ||  type === 'xls'){
           this.$axios.post('/file2Pdf',
             {
             input:path
           })
             .then(function (res) {
-              console.log(res.data.result)
               this.pdfurl = res.data.result;
               this.showPDF = true;
             }.bind(this))
@@ -452,39 +496,93 @@
       /*移动或复制*/
       moveAndCopy(newFatherPath){
         if(this.moveOrCopy === 'move')
-          this.moveToAnotherPlace(newFatherPath);
-
+          this.moveFile(newFatherPath);
+        else if(this.moveOrCopy === 'copy')
+          this.copyFile(newFatherPath);
       },
-      /*移动*/
-      moveToAnotherPlace(newFatherPath){
+      /*多文件移动加载目录树*/
+      loadMoveFiles(){
+        this.showTreeDialog = true;
+        this.moveOrCopy = 'move';
+      },
+      /*多文件复制加载目录树*/
+      loadCopyFiles(){
+        this.showTreeDialog = true;
+        this.moveOrCopy = 'copy';
+      },
+      /*文件移动*/
+      moveFile(newFatherPath){
+        let postString = '';
+        for(let i = 0 ; i<this.fileSelection.length; i++) {
+          if(i!==0)
+            postString += ','
+          postString += this.fileSelection[i].path;
+        }
         this.$axios.post('/move',
           {
-            oldDirPath:this.clickFile,
-            newFatherPath:newFatherPath,
+            header:{'content-type':'application/json'}
+          },
+          {
+            params:{
+              oldDirPaths:postString,
+              newFatherPath:newFatherPath,
+            }
           })
           .then(function (res) {
-            console.log(res)
-            if(res.data.status === '移动成功'){
-              this.drawMsg('success','文件移动成功！')
+            console.log(res);
+            let errorFlag = 0;
+            for(let i = 0; i<res.data.length; i++) {
+              if(res.data[i].status !== '移动成功') {
+                errorFlag ++;
+              }
+            }
+            if(errorFlag === 0) {
+              this.drawMsg('success', '所有文件移动成功！');
               this.loadFileList();
             }
-            else if (res.data.status === '移动失败') {
-              if(res.data.result === '该文件下已经存在相同名字的文件')
-                this.drawMsg('error', res.data.result);
-              else if(res.data.result === '不能移动到本文件夹')
-                this.drawMsg('error', res.data.result)
+            else if(errorFlag < res.data.length) {
+              this.drawMsg('success', '部分文件移动成功');
+              this.loadFileList();
+            }
+            else if(errorFlag === res.data.length) {
+              this.drawMsg('error','所有文件移动失败');
             }
           }.bind(this))
           .catch(function (err) {
             console.log(err)
             this.drawMsg('error', '文件移动失败！');
           }.bind(this))
+      },
+      /*文件复制*/
+      copyFile(newFatherPath) {
+        let postString = '';
+        for(let i = 0 ; i<this.fileSelection.length; i++) {
+          if(i!==0)
+            postString += ','
+          postString += this.fileSelection[i].path;
+        }
+        this.$axios.post('/user/file/copy/all',
+          {
+            srcPaths:postString,
+            dstPath:newFatherPath,
+          })
+          .then(function (res) {
+            if(res.data.code === 0)
+              this.drawMsg('success', '复制成功！');
+            else if(res.data.code === 1)
+              this.drawMsg('error','复制失败, 文件(夹)冲突！')
+            else if(res.data.code === 2)
+              this.drawMsg('error', res.data.msg)
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+          })
       }
     },
     mounted(){
-      console.log(this.breadList)
+      /*console.log(this.breadList)*/
       this.loadDir(this.breadList[this.breadList.length-1].path);
-      this.loadFileList();
+     /* this.loadFileList();*/
     },
   }
 </script>
@@ -493,7 +591,10 @@
   .all_operate {
     display: inline-flex;
     padding: 15px 20px;
-    min-width: 350px;
+    min-width: 850px;
+  }
+  .all_operate div{
+    margin-left: 10px;
   }
 
   .search_and_sort {

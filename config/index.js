@@ -16,11 +16,6 @@ module.exports = {
         target: "http://192.168.100.131:8080",
         pathRewrite: {"^/api" : ""}
       },*/
-      /*"/showPdf": {
-        target: "http://192.168.100.152:8081",
-        changeOrigin: true,
-        pathRewrite: {"^/api" : ""}
-      },*/
     },
 
     // Various Dev Server settings

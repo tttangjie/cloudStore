@@ -38,6 +38,6 @@
   }
   .el-main{
     padding: 0;
-    min-width: 850px;
+    min-width: 1050px;
   }
 </style>

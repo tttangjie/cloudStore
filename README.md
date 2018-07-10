@@ -1,6 +1,7 @@
 # cloud-store
 
 > A Vue.js project
+> 构建一个云存储系统，实现文件的上传、下载、预览，以及相应的用户管理等功能。
 
 ## Build Setup
 

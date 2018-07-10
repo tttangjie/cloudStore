@@ -41,6 +41,11 @@ export default new Router({
           path:'/home/all',
           name:'All',
           component: (resolve) => require(['../components/user/aboutFile/AllFile'], resolve),
+        },
+        {
+          path:'/home/recycle',
+          name:'Recycle',
+          component: (resolve) => require(['../components/user/aboutRecycle/Recycle'], resolve),
         }
       ]
     }

@@ -23,7 +23,7 @@
               <i class="el-icon-share"></i>
               <span slot="title">我的分享</span>
             </el-menu-item>
-            <el-menu-item index="recycle" route="/home">
+            <el-menu-item index="recycle" route="/home/recycle">
               <i class="el-icon-delete"></i>
               <span slot="title">回收站</span>
             </el-menu-item>

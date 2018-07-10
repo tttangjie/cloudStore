@@ -72,7 +72,7 @@
     width: 100%;
     height: 100%;
     background: #313131;
-    min-width: 850px;
+    min-width: 1050px;
   }
   .head_title {
     display: inline-flex;
