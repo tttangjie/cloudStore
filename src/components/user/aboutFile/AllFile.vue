@@ -3,9 +3,9 @@
     <!--全部文件上面一排工具菜单-->
     <div>
       <div class="all_operate">
-        <el-button type="primary" icon="el-icon-upload2" class="btn_primary">
-          上传
-        </el-button>
+        <div  @click="asideRight" class="picker">
+
+        </div>
         <el-button @click="newFolderPushToFileList">
           <i class="fa fa-folder-o"></i>
           <span>新建文件夹</span>
@@ -152,11 +152,9 @@
       <!--目录树的Dialog-->
       <DirectoryTree
         :show="showTreeDialog"
-
         v-on:showTreeDialogFalse="showTreeDialog = false"
         v-on:confirmSelectPath="moveAndCopy">
       </DirectoryTree>
-
 
       <!--预览PDF文件的Dialog-->
       <el-dialog
@@ -168,26 +166,57 @@
         center>
         <pdf-view  :pdfurl="pdfurl"> </pdf-view>
       </el-dialog>
+
+      <!--预览视频的Dialog-->
+      <el-dialog
+        title="在线预览视频"
+        :visible.sync="showVideoPlay"
+        width="60%"
+        height="60%"
+        center
+        :close-on-click-modal=false
+        :close-on-press-escape=false>
+        <span>
+          <video width="960" height="720" controls>
+              <source v-bind:src='this.GLOBAL.BASE_URL + "/get/stream?fpath="+clickFile' type="video/mp4">
+          </video>
+        </span>
+      </el-dialog>
+
+      <!--下载列表-->
+      <b-aside  :is-show="showUploadAside"
+               title="文件上传列表"
+               :show-footer="false"
+               placement="right"
+               :backdrop="false"
+               @close="showUploadAside=false">
+        <FileUpload
+          v-bind:uploadPath="breadList[breadList.length-1].path"
+          @uploadComplete="loadFileList">
+        </FileUpload>
+      </b-aside>
     </div>
   </div>
 </template>
 
 <script>
   import DirectoryTree from './DirectoryTree'
+  import FileUpload from '../uploadFiles/fileUpload'
   export default {
     name: "all-file",
     components:{
       DirectoryTree,
+      FileUpload,
     },
     data(){
       return{
         pdfurl:'',
-        showTreeDialog:false,/////test
+        showTreeDialog:false,
         username:sessionStorage.getItem('username'),
         searchContent:'',
         fileTotal:0,
         /*fileList中的path 和 BreadList中的path不是同一个含义*/
-        breadList:[{path:'/'+sessionStorage.getItem('username'),name:'全部文件'},/*{path:'/test1',name:'test1'},{path:'/test1/test2',name:'test2'}*/],
+        breadList:[{path:'/'+sessionStorage.getItem('username'),name:'全部文件'}],
         fileList:[
           {
             type:'folder',
@@ -218,10 +247,15 @@
         isRename:true,
         showPDF:false ,
         moveOrCopy:'',
+        showVideoPlay:false,
+        showUploadAside:false,
       }
     },
 
     methods:{
+      asideRight() {
+        this.showUploadAside = true;
+      },
       drawMsg(type, content) {
         this.$message({
           message:content,
@@ -317,6 +351,7 @@
           muluName:this.breadList[this.breadList.length-1].path,
         })
           .then(function (res) {
+            console.log(res)
             this.fileList = res.data.result;
           }.bind(this))
           .catch(function (err) {
@@ -480,6 +515,10 @@
               console.log(err)
             }.bind(this))
         }
+        else if(type === 'mp4') {
+          this.showVideoPlay = true;
+        }
+
       },
       /*删除预览的PDF文件*/
       deletePDF(){

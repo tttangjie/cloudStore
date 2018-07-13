@@ -19,7 +19,7 @@
             highlight-current>
             <span class="custom-tree-node" slot-scope="{ node, data }">
               <img src="../../../assets/file_icon/folder.png">
-              <span>{{ node.label }}</span>
+              <span>{{node.label}}</span>
             </span>
           </el-tree>
         </span>

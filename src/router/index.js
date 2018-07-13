@@ -46,6 +46,11 @@ export default new Router({
           path:'/home/recycle',
           name:'Recycle',
           component: (resolve) => require(['../components/user/aboutRecycle/Recycle'], resolve),
+        },
+        {
+          path:'/home/category',
+          name:'Category',
+          component: (resolve) => require(['../components/user/aboutCategory/Category'], resolve),
         }
       ]
     }

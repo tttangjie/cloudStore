@@ -14,10 +14,10 @@
             </el-menu-item>
             <div class="file-group">
               <el-menu-item index="img" route="/home"><p>图片</p></el-menu-item>
-              <el-menu-item index="doc" route="/home"><p>文档</p></el-menu-item>
-              <el-menu-item index="video" route="/home"><p>视频</p></el-menu-item>
-              <el-menu-item index="music" route="/home"><p>音乐</p></el-menu-item>
-              <el-menu-item index="other" route="/home"><p>其他</p></el-menu-item>
+              <el-menu-item index="text" @click="jumpToTypePage('text')"><p>文档</p></el-menu-item>
+              <el-menu-item index="video"  @click="jumpToTypePage('video')"><p>视频</p></el-menu-item>
+              <el-menu-item index="music"  @click="jumpToTypePage('music')"><p>音乐</p></el-menu-item>
+              <el-menu-item index="other"  @click="jumpToTypePage('other')"><p>其他</p></el-menu-item>
             </div>
             <el-menu-item index="share" route="/home">
               <i class="el-icon-share"></i>
@@ -46,6 +46,14 @@
           }
         },
         methods: {
+          jumpToTypePage(type){
+            this.$router.push({
+              path: '/home/category',
+              query: {
+                type: type
+              }
+            })
+          },
           handleOpen(key, keyPath) {
             console.log(key, keyPath);
           },
