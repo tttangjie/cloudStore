@@ -1,5 +1,5 @@
 <template>
-  <div id="uploader" class="wu-example">
+  <div id="uploader" class="wu-example" v-if="">
     <el-row class="about_upload_btn">
       <!--<el-button id="uploadStartBtn" type="primary">全部开始</el-button>
       <el-button id="uploadStopBtn">全部暂停</el-button>-->
@@ -172,7 +172,6 @@
               text = "文件秒传功能，文件已上传。"
             }
             $('#' + file.id).find('p.state').text(text);
-
           },
           uploadError(file) {
             $('#' + file.id).find('p.state').text('上传出错');
@@ -203,7 +202,7 @@
                 '</div>'
               ).appendTo($li).find('#' + id_Prefix + '-progress-bar');
             }
-            let progressPercentage = percentage * 100 + '%';
+            let progressPercentage = (percentage * 100).toFixed(2) + '%';
             $percent.css('width', progressPercentage);
             $percent.html(titleName + ':' + progressPercentage);
           },
@@ -218,7 +217,6 @@
           }
         },
         mounted() {
-
           this.$thelist = $('#thelist');
 
           WebUploader.Uploader.register({
@@ -226,8 +224,6 @@
             'before-send': (block) => this.beforeSend(block)
           });
           this.initWebUpload();
-           this.fileItem = this.uploader.getFiles();
-           console.log(this.fileItem)
           this.uploader.on('fileQueued',  (file) => this.fileQueud(file));
           this.uploader.on('uploadBeforeSend', (obj, data) => this.uploadBeforeSend(obj, data));
           this.uploader.on('uploadProgress', (file, percentage) => this.uploadProgress(file, percentage));
@@ -237,7 +233,10 @@
 
         },
         destroyed(){
-            this.uploader.destroy();
+          this.uploader.stop(true);
+          this.uploader.reset();
+          this.uploader.destroy();
+          this.initWebUpload();
         },
 
         watch:{

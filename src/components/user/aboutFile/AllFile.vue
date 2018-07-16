@@ -501,7 +501,7 @@
         if(type === 'folder'){
           this.addBreadList(path, name);
         }
-        else if(type === 'doc' || type === 'ppt' || type === 'txt' || type === 'code' ||  type === 'xls'){
+        else if(type === 'doc' || type === 'ppt' || type === 'txt' || type === 'code' ||  type === 'xls' || type === 'pdf' || type === 'img'){
           this.$axios.post('/file2Pdf',
             {
             input:path
@@ -515,7 +515,7 @@
               console.log(err)
             }.bind(this))
         }
-        else if(type === 'mp4') {
+        else if(type === 'video') {
           this.showVideoPlay = true;
         }
 

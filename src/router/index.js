@@ -53,6 +53,12 @@ export default new Router({
           component: (resolve) => require(['../components/user/aboutCategory/Category'], resolve),
         }
       ]
+    },
+    {
+      path: '/personal',
+      name: 'Personal',
+      component: (reslove) => require(['../components/user/personalManagement/Personal'], reslove),
+      children:[],
     }
   ]
 })

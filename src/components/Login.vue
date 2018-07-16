@@ -183,6 +183,7 @@
                   this.$store.state.phone = res.data.phone;
                   sessionStorage.userToken =  this.$store.state.token;
                   sessionStorage.setItem('username',this.$store.state.username);
+                  sessionStorage.setItem('phone', this.$store.state.phone);
                   console.log(sessionStorage.userToken);
                   this.$router.push('/home/all');
                 }
@@ -216,6 +217,7 @@
                   this.$store.state.phone = res.data.phone;
                   sessionStorage.userToken =  this.$store.state.token;
                   sessionStorage.setItem('username',this.$store.state.username);
+                  sessionStorage.setItem('phone', this.$store.state.phone);
                   this.$router.push('/home/all');
                 }
                 else if (res.data.code === 1) {
@@ -294,6 +296,8 @@
         mounted() {
           document.getElementById('login_body').style.height =this.bodyHeight;
           document.getElementById('setInputPWD').focus();
+
+          this.$store.state.headImgFlag = true;
         },
 
 
