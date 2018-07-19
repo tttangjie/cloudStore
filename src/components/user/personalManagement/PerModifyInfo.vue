@@ -25,7 +25,9 @@
           <input class="age_box" type="number" v-model.number="form.age">
         </el-form-item>
         <el-form-item label="城市">
-          <el-input v-model="form.city"> </el-input>
+          <el-select v-model="form.city">
+            <el-option :label="city" :value="city" :key="city" v-for="city in cityList"> </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="个人简介">
           <el-input type="textarea" v-model="form.introduction"> </el-input>
@@ -49,6 +51,10 @@
               'Content-Type':' multipart/form-data',
             },
             form:{},
+            cityList:['北京','上海','天津','重庆','黑龙江', '辽宁','吉林', '河北',
+                      '河南','山东','山西','陕西','安徽','浙江','江苏','福建',
+                      '广东','海南','四川','云南','贵州','青海','甘肃','江西','台湾',
+                      '香港','澳门','内蒙古','宁夏','新疆','西藏','广西'],
           }
         },
         methods:{
@@ -79,7 +85,7 @@
                 age:this.form.age,
                 sex:this.form.sex,
                 city:this.form.city,
-                introduction:this.from.introduction,
+                introduction:this.form.introduction,
               })
               .then(function (res) {
                 if(res.data.code === 0) {

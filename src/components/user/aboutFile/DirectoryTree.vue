@@ -1,10 +1,9 @@
 <template>
-
   <el-dialog
     title="选择文件夹"
     :visible.sync="showDialog"
     @open="fatherShowFalse"
-    width="35%"
+    width="400px"
     center>
         <span>
           <el-tree
@@ -55,31 +54,6 @@
 
             }],
             pathList:[],
-            /*pathList:[{
-              name:'全部文件',
-              path:'/zlw',
-              leaf:'true',
-            }],
-            pathList2:[{
-              name:'test1',
-              path:'/test1',
-              leaf:'true',
-            },
-              {
-                name:'test2',
-                path:'/test2',
-                leaf:'false',
-              }],
-            pathList3:[{
-              name:'test3',
-              path:'/test3',
-              leaf:'true',
-            },
-              {
-                name:'test4',
-                path:'/test4',
-                leaf:'false',
-              }],*/
           };
         },
         methods: {
@@ -151,4 +125,9 @@
     height: 20px;
   }
 
+</style>
+<style>
+  .el-tree-node__content {
+    height: 60px;
+  }
 </style>

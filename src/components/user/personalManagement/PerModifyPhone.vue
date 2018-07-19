@@ -1,12 +1,12 @@
 <template>
-  <div class="modify_pwd_body">
+  <div class="modify_phone_body">
     <el-steps :active="activeStep" finish-status="success">
       <el-step title="验证身份"> </el-step>
-      <el-step title="设置密码"> </el-step>
-      <el-step title="改密成功"> </el-step>
+      <el-step title="设置新手机号"> </el-step>
+      <el-step title="更改成功"> </el-step>
     </el-steps>
 
-    <div class="modify_pwd_pane">
+    <div class="modify_phone_pane">
       <div class="modify_pane1" v-if="activeStep === 0">
         <el-input
           class="input_box"
@@ -31,38 +31,39 @@
         <el-button type="primary" class="submit_btn" @click="checkSmsMsg">下一步</el-button>
       </div>
 
-      <div class="modify_pane2" v-if="activeStep === 1">
+      <div class="modify_pane1" v-if="activeStep === 1">
         <el-input
           class="input_box"
-          placeholder="新密码"
-          v-model="pwd.first"
-          type="password"
-          @blur="pwdFormat">
+          placeholder="请输入手机号"
+          v-model="newPhone">
+          <template slot="prepend">+86</template>
         </el-input>
-
         <div class="input_box code_box">
           <el-input
-            class="input_box"
-            placeholder="请再次输入密码"
-            v-model="pwd.second"
-            type="password"
-            @blur="secondEqualsFirst">
+            class="input_code"
+            placeholder="短信验证码"
+            v-model="newMsgCode">
           </el-input>
+          <el-button
+            type="primary"
+            v-bind:disabled="!phoneVerify.canClick"
+            @click="checkAndSendPhone">
+            {{phoneVerify.btnContent}}
+          </el-button>
         </div>
-        <el-button type="primary" class="submit_btn" @click="changePWD">下一步</el-button>
+        <el-button type="primary" class="submit_btn" @click="checkAndModifyPhone">下一步</el-button>
       </div>
 
       <div class="modify_pane3" v-if="activeStep === 2">
-        <p class="modify_pwd_to_login">即将返回登录界面...</p>
+        <p class="modify_phone_to_login">即将返回登录界面...</p>
       </div>
-
     </div>
   </div>
 </template>
 
 <script>
     export default {
-        name: "per-modify-pwd",
+        name: "per-modify-phone",
         data(){
           return{
             activeStep:0,
@@ -73,13 +74,12 @@
               canClick:true,
               countDown:60,
             },
-            pwd:{
-              first:'',
-              second:'',
-            }
+
+            newPhone:'',
+            newMsgCode:'',
           }
         },
-        methods:{
+        methods: {
           drawMsg(type, content) {
             this.$message({
               message:content,
@@ -143,68 +143,70 @@
               }))
           },
 
-          pwdFormat(){
-            if(this.pwd.first.length < 6 || this.pwd.first.length>16 ) {
-              this.drawMsg('warning', '密码长度应在6~16之间');
-              return 1;
+          checkAndSendPhone(){
+            if(this.newPhone === ''){
+              this.drawMsg('warning', '请先输入手机号');
+              return 0;
             }
-            else if(this.pwd.first.indexOf(" ") !== -1 ) {
-              this.drawMsg('warning', '密码中不可携带空格');
-              return 1;
-            }
-            return 0;
+            this.$axios.get('/user/check',
+              {
+                params:{
+                  tel:this.newPhone,
+                }
+              })
+              .then(function (res) {
+                if(res.data.code === 1)
+                  this.drawMsg('error', '手机号已被注册');
+                else if(res.data.code === 0) {
+                  this.sendMsg();
+                }
+              }.bind(this))
+              .catch((function (res) {
+                console.log(res);
+              }))
           },
-          secondEqualsFirst(){
-            if(this.pwd.first !== this.pwd.second) {
-              this.drawMsg('error', '两次密码输入不一致');
-              return 1;
-            }
-            return 0;
+          checkAndModifyPhone(){
+            this.$axios.put('/change/tel',
+              {
+                header:{'Content-Type':'application/json'}
+              },
+              {
+                params:{
+                  newTel:this.newPhone,
+                  sms:this.newMsgCode,
+                }
+              })
+              .then(function (res) {
+                console.log(res)
+                if(res.data.code === 0) {
+                  this.activeStep++;
+                  setTimeout(() => {
+                    this.backToLogin();
+                  }, 3000);
+                }
+                else
+                  this.drawMsg('error', '验证码有误！')
+              }.bind(this))
+              .catch(function (err) {
+                console.log(err)
+              })
           },
-          changePWD(){
-            console.log(this.pwd.first)
-            if(!this.pwdFormat() && !this.secondEqualsFirst()) {
-              this.$axios.put('/change/password',
-                {
-                  header:{'Content-Type':'application/json'}
-                },
-                {
-                  params:{
-                    newPassword:this.pwd.first,
-                  }
-                })
-                .then(function (res) {
-                  if(res.data.code === 0) {
-                    this.activeStep++;
-                    setTimeout(() => {
-                      this.backToLogin();
-                    }, 3000);
-                  }
-                  else {
-                    this.drawMsg('error', '密码修改失败！');
-                  }
-                }.bind(this))
-                .catch(function (err) {
-                  console.log(err)
-                })
-            }
-          },
+        }
 
-
-        },
     }
 </script>
 
 <style scoped>
-  .modify_pwd_body {
+  .modify_phone_body {
     width: 55%;
     margin: 30px 15%;
   }
-  .modify_pwd_pane{
+  .modify_phone_pane{
     margin-top: 15%;
     width: 60%;
     margin-left: 15%;
   }
+
   .input_box{
     margin:3% 0;
   }
@@ -224,8 +226,7 @@
     margin-top: 60px;
     width: 100%;
   }
-
-  .modify_pwd_to_login{
+  .modify_phone_to_login{
     font-size: 20px;
     text-align: center;
   }

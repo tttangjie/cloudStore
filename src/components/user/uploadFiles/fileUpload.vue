@@ -35,6 +35,8 @@
             $thelist:'',
             stopOrStart:true,
             fileItem:[],
+            username:sessionStorage.getItem('username'),
+
           }
         },
         methods:{
@@ -50,6 +52,8 @@
                 uid: 0,
                 md5: '',
                 chunkSize: this.chunkSize,
+                username: this.username,
+                path:this.uploadPath,
               },
               swf:'../../../../static/webuploader/Uploader.swf',
               chunked: true, //分片上传
@@ -99,7 +103,7 @@
               // file.uid = new Date().getTime() + "_" + Math.random() * 100;
               file.uid = WebUploader.Base.guid();
               // 进行md5判断
-              this.$axios.post("/break/checkFileMd5",
+     /*         this.$axios.post("/break/checkFileMd5",
                 {
                   uid: file.uid,
                   fileMd5: file.md5,
@@ -122,7 +126,33 @@
                   }}.bind(this))
                 .catch(function (err) {
                   console.log(err)
-                })
+                })*/
+                $.ajax({
+                  type:"post",
+                  url:this.GLOBAL.BASE_URL +"/break/checkFileMd5",
+                  async:false,
+                  data:{
+                    uid: file.uid,
+                    fileMd5: file.md5,
+                    path:this.uploadPath,
+                    fileName:file.name,
+                    username:this.username,
+                  },
+                  success: function (data) {
+                    let status = data.status.value;
+                    task.resolve();
+                    if (status == 101) {
+                      // 文件不存在，那就正常流程
+                    } else if (status == 100) {
+                      // 忽略上传过程，直接标识上传成功；
+                      this.uploader.skipFile(file);
+                      file.pass = true;
+                    } else if (status == 102) {
+                      // 部分已经上传到服务器了，但是差几个模块。
+                      file.missChunks = data.data;
+                    }
+                  }.bind(this)
+              });
             }.bind(this));
             return $.when(task);
           },

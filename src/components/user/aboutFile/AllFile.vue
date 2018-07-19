@@ -10,11 +10,11 @@
           <i class="fa fa-folder-o"></i>
           <span>新建文件夹</span>
         </el-button>
-        <el-button icon="el-icon-share">
-          分享
-        </el-button>
         <transition name="el-fade-in-linear">
           <div v-show="fileSelection.length > 0">
+            <el-button icon="el-icon-share" @click="showShareDialog = true">
+              分享
+            </el-button>
             <el-button icon="el-icon-download" @click="downloadFiles">
               下载
             </el-button>
@@ -99,7 +99,7 @@
                 </div>
               </el-col>
               <el-col :span="5" class="file_operate" v-show="hoverFilePath === scope.row.path">
-                <a><i class="el-icon-share"></i></a>
+                <a @click="showShareDialog = true"><i class="el-icon-share"></i></a>
 
                 <a @click="downloadFile(scope.row.path, scope.row.type)"><i class="el-icon-download"></i></a>
                 <!--<a v-if="scope.row.isDir==='文件夹' " v-bind:href="GLOBAL.BASE_URL+'/downloadFolder?srcName=/user'+ scope.row.path"><i class="el-icon-download"></i></a>
@@ -156,16 +156,12 @@
         v-on:confirmSelectPath="moveAndCopy">
       </DirectoryTree>
 
-      <!--预览PDF文件的Dialog-->
-      <el-dialog
-        :visible.sync="showPDF"
-        width="72%"
-        :close-on-click-modal=false
-        :close-on-press-escape=false
-        @close="deletePDF"
-        center>
-        <pdf-view  :pdfurl="pdfurl"> </pdf-view>
-      </el-dialog>
+      <!--分享的Dialog-->
+      <ShareDialog
+        v-on:showShareDialogFalse="showShareDialog = false"
+        :show="showShareDialog"
+        :fileSelection="fileSelection">
+      </ShareDialog>
 
       <!--预览视频的Dialog-->
       <el-dialog
@@ -181,6 +177,17 @@
               <source v-bind:src='this.GLOBAL.BASE_URL + "/get/stream?fpath="+clickFile' type="video/mp4">
           </video>
         </span>
+      </el-dialog>
+
+      <!--预览PDF文件的Dialog-->
+      <el-dialog
+        :visible.sync="showPDF"
+        width="72%"
+        :close-on-click-modal=false
+        :close-on-press-escape=false
+        @close="deletePDF"
+        center>
+        <pdf-view  :pdfurl="pdfurl"> </pdf-view>
       </el-dialog>
 
       <!--下载列表-->
@@ -202,9 +209,11 @@
 <script>
   import DirectoryTree from './DirectoryTree'
   import FileUpload from '../uploadFiles/fileUpload'
+  import ShareDialog from "./ShareDialog";
   export default {
     name: "all-file",
     components:{
+      ShareDialog,
       DirectoryTree,
       FileUpload,
     },
@@ -249,6 +258,7 @@
         moveOrCopy:'',
         showVideoPlay:false,
         showUploadAside:false,
+        showShareDialog: false,
       }
     },
 

@@ -4,6 +4,7 @@ import ElementUI from 'element-ui'
 import VueBlu from 'vue-blu'
 import Vuex from 'vuex'
 import axios from  'axios'
+import VueCookie from 'vue-cookie'
 import 'element-ui/lib/theme-chalk/index.css'
 import 'vue-blu/dist/css/vue-blu.min.css'
 
@@ -18,6 +19,7 @@ Vue.use(Router);
 Vue.use(ElementUI);
 Vue.use(VueBlu);
 Vue.use(Vuex);
+Vue.use(VueCookie)
 
 export default new Router({
  /* mode: 'history',*/
@@ -51,6 +53,11 @@ export default new Router({
           path:'/home/category',
           name:'Category',
           component: (resolve) => require(['../components/user/aboutCategory/Category'], resolve),
+        },
+        {
+          path:'/home/share',
+          name:'MyShare',
+          component: (resolve) => require(['../components/user/aboutShare/MyShare'], resolve),
         }
       ]
     },
@@ -58,10 +65,44 @@ export default new Router({
       path: '/personal',
       name: 'Personal',
       component: (reslove) => require(['../components/user/personalManagement/Personal'], reslove),
-      children:[],
+    },
+    {
+      path: '/share/:id',
+      name: 'Share',
+      component: (reslove) => require(['../components/user/aboutShare/ShareLink'], reslove),
     }
   ]
 })
+
+/* Layout */
+import Layout from '../components/admin/layout/Layout'
+export const constantRouterMap = [
+  { path: '/404', component: () => import('../components/404'), hidden: true },
+
+  {
+    path: '/test',
+    component: Layout,
+    redirect: '/dashboard',
+    name: 'Dashboard',
+    hidden: true,
+    children: [{
+      path: 'dashboard',
+      component: () => import('../components/login')
+    }]
+  },
+
+  {
+    path: '/nested',
+    component: Layout,
+    redirect: '/nested/menu1',
+    name: 'nested',
+    meta: {
+      title: 'nested',
+    }
+  },
+
+  { path: '*', redirect: '/404', hidden: true }
+]
 
 import qs from 'qs'
 

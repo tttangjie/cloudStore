@@ -19,7 +19,7 @@
               <el-menu-item index="music"  @click="jumpToTypePage('music')"><p>音乐</p></el-menu-item>
               <el-menu-item index="other"  @click="jumpToTypePage('other')"><p>其他</p></el-menu-item>
             </div>
-            <el-menu-item index="share" route="/home">
+            <el-menu-item index="share" route="/home/share">
               <i class="el-icon-share"></i>
               <span slot="title">我的分享</span>
             </el-menu-item>

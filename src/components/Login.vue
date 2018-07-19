@@ -50,15 +50,15 @@
                 </el-input>
                 <!--使用后台存入session中随机生成的验证码-->
                 <img v-bind:src="this.GLOBAL.BASE_URL+'/code/image'" ref="imageCodeRef" @click="changeImgCode">
-              </div>
-              </form>
+                </div>
 
-              <el-row class="login_tool">
-                <el-col :span="14">
-                  <el-checkbox v-model="autoLogin">下次自动登录</el-checkbox>
-                </el-col>
-                <el-col :span="10"><p class="forget_pwd">忘记密码？</p></el-col>
-              </el-row>
+                <el-row class="login_tool">
+                  <el-col :span="14">
+                    <el-checkbox name="remember-me" v-model="autoLogin" v-bind:value="autoLogin">下次自动登录</el-checkbox>
+                  </el-col>
+                  <el-col :span="10"><p class="forget_pwd">忘记密码？</p></el-col>
+                </el-row>
+              </form>
             </el-tab-pane>
 
             <el-tab-pane label="快捷登录" name="fromPhone">
@@ -173,6 +173,7 @@
                   'username':this.username,
                   'password':this.pwd,
                   'imageCode':this.imageCode,
+                  /*'remember-me':this.autoLogin,*/
               })
               .then(function (res) {
                 if ( res.data.code === 0) {
@@ -180,11 +181,11 @@
                   this.$store.state.token = res.data.Token;
                   this.$store.state.role = res.data.role;
                   this.$store.state.username = res.data.username;
-                  this.$store.state.phone = res.data.phone;
+                  this.$store.state.phone = res.data.tel;
                   sessionStorage.userToken =  this.$store.state.token;
                   sessionStorage.setItem('username',this.$store.state.username);
                   sessionStorage.setItem('phone', this.$store.state.phone);
-                  console.log(sessionStorage.userToken);
+                  this.$cookie.set('username', this.$store.state.username);
                   this.$router.push('/home/all');
                 }
                 else if( res.data.code === 1) {
@@ -214,10 +215,11 @@
                   this.$store.state.token = res.data.Token;
                   this.$store.state.role = res.data.role;
                   this.$store.state.username = res.data.username;
-                  this.$store.state.phone = res.data.phone;
+                  this.$store.state.phone = res.data.tel;
                   sessionStorage.userToken =  this.$store.state.token;
                   sessionStorage.setItem('username',this.$store.state.username);
                   sessionStorage.setItem('phone', this.$store.state.phone);
+                  this.$cookie.set('username', this.$store.state.username);
                   this.$router.push('/home/all');
                 }
                 else if (res.data.code === 1) {
