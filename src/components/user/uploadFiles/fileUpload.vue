@@ -12,7 +12,9 @@
         inactive-text="暂停">
       </el-switch>
     </el-row>
-    <div id="thelist" class="uploader-list"></div>
+    <div id="thelist" class="uploader-list">
+
+    </div>
     <!--<div id="picker">  </div>-->
     <!--<el-button id="ctlBtn" class="btn btn-default">开始上传</el-button>-->
   </div>
@@ -35,7 +37,7 @@
             $thelist:'',
             stopOrStart:true,
             fileItem:[],
-            username:sessionStorage.getItem('username'),
+            username:this.$cookie.get('username'),
 
           }
         },
@@ -151,6 +153,11 @@
                       // 部分已经上传到服务器了，但是差几个模块。
                       file.missChunks = data.data;
                     }
+                    else if (status == 104) {
+                      // 部分已经上传到服务器了，但是差几个模块。
+                      this.uploader.skipFile(file);
+                      file.full = true;
+                    }
                   }.bind(this)
               });
             }.bind(this));
@@ -197,9 +204,13 @@
           },
           // 上传返回结果
           uploadSuccess(file) {
+            if (file.full) {
+              this.drawMsg('error','磁盘空间不足');
+              return ;
+            }
             let text = '已上传';
             if (file.pass) {
-              text = "文件秒传功能，文件已上传。"
+              text = "文件秒传成功。"
             }
             $('#' + file.id).find('p.state').text(text);
           },

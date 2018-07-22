@@ -70,7 +70,7 @@
         name: "per-home",
         data(){
           return{
-            username:sessionStorage.getItem('username'),
+            username:this.$cookie.get('username'),
             isVIP:false,
             headImgRef:'',
             totalSpace:[],

@@ -20,7 +20,7 @@
       </el-menu>
     </el-col>
 
-    <div class="head_tool_box">
+    <div v-if="isLogin" class="head_tool_box">
       <el-dropdown class="head_info"  @command="dropDownCommend">
         <div class="el-dropdown-link head_dropdown">
           <img class="head_img" v-bind:src="this.GLOBAL.BASE_URL+'/user/icon/get'" ref="headImgRef">
@@ -60,6 +60,11 @@
         <i class="fa fa-bolt"></i>
       </div>
     </div>
+
+
+    <p class="login_or_register" v-if="!isLogin">
+      <span class="login_register" @click="jumpToHeaderVue('/')">登录</span> | <span class="login_register" @click="jumpToHeaderVue('/register')">注册</span>
+    </p>
   </el-row>
 </template>
 
@@ -72,9 +77,10 @@
       data(){
         return{
           activeIndex:'cStore',
-          username:sessionStorage.getItem('username'),
+          username:this.$cookie.get('username'),
           isVIP:false,
           headImgRef:'',
+          isLogin:true,
         }
       },
       methods:{
@@ -90,12 +96,30 @@
           } else if(command === 'personal') {
               this.$router.push('/personal');
           } else if(command === 'exit') {
-
+            this.$axios.get('/loginPage?logout')
+              .then(function (res) {
+                if(res.data.code === 100) {
+                  this.$router.push('/');
+                  this.$store.state.token = '';
+                  this.$store.state.role = '';
+                  this.$store.state.username = '';
+                  this.$store.state.phone = '';
+                  sessionStorage.userToken =  '';
+                  this.$cookie.delete('username');
+                  this.$cookie.delete('phone');
+                  this.$cookie.delete('role');
+                }
+              }.bind(this))
+              .catch(function (err) {
+                console.log(err)
+              })
           }
         },
       },
       mounted(){
-
+        if(this.$cookie.get('username')===null){
+          this.isLogin = false;
+        }
       },
     }
 </script>
@@ -227,6 +251,23 @@
   }
   .head_tools i {
     margin-left: 8px;
+  }
+
+  .btn_tools button{
+    width: 40%;
+    margin-left: 5%;
+    margin-top: 10%;
+  }
+
+  .login_or_register{
+    margin-right: 15px;
+    float: right;
+    color: white;
+    line-height: 60px;
+    font-size: 14px;
+  }
+  .login_register:hover{
+    cursor: pointer;
   }
 
 </style>

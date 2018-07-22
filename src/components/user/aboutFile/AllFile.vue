@@ -76,7 +76,8 @@
       @cell-mouse-enter="handleMouseEnter"
       @cell-mouse-leave="handleMouseLeave"
       @current-change="handleCurrentClick"
-      @cell-dblclick="enterOrPreview(clickFile, fileSelection[0].type, fileSelection[0].fileName)">
+      @cell-dblclick="enterOrPreview(clickFile, fileSelection[0].type, fileSelection[0].fileName)"
+      :default-sort = "{prop: 'time', order: 'descending'}">
       <el-table-column
         type="selection"
         width="55">
@@ -99,6 +100,7 @@
                 </div>
               </el-col>
               <el-col :span="5" class="file_operate" v-show="hoverFilePath === scope.row.path">
+                <a @click="showDecompressDialog = true" v-show="scope.row.type === 'zip'"><i class="el-icon-news"></i></a>
                 <a @click="showShareDialog = true"><i class="el-icon-share"></i></a>
 
                 <a @click="downloadFile(scope.row.path, scope.row.type)"><i class="el-icon-download"></i></a>
@@ -149,6 +151,19 @@
         </span>
       </el-dialog>
 
+      <!--解压的Dialog-->
+      <el-dialog
+        title="确认解压"
+        :visible.sync="showDecompressDialog"
+        width="30%"
+        center>
+        <span>确认解压文件吗？</span>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="showDecompressDialog = false">取 消</el-button>
+          <el-button type="primary" @click="decompressFile">确 定</el-button>
+        </span>
+      </el-dialog>
+
       <!--目录树的Dialog-->
       <DirectoryTree
         :show="showTreeDialog"
@@ -187,7 +202,7 @@
         :close-on-press-escape=false
         @close="deletePDF"
         center>
-        <pdf-view  :pdfurl="pdfurl"> </pdf-view>
+        <pdf-view  :pdfurl="pdfurl" v-if="showPDF"> </pdf-view>
       </el-dialog>
 
       <!--下载列表-->
@@ -221,11 +236,12 @@
       return{
         pdfurl:'',
         showTreeDialog:false,
-        username:sessionStorage.getItem('username'),
+        username:this.$cookie.get('username'),
         searchContent:'',
         fileTotal:0,
         /*fileList中的path 和 BreadList中的path不是同一个含义*/
-        breadList:[{path:'/'+sessionStorage.getItem('username'),name:'全部文件'}],
+        /*breadList:[{path:'/'+sessionStorage.getItem('username'),name:'全部文件'}],*/
+        breadList:[{path:'/'+this.$cookie.get('username'),name:'全部文件'}],
         fileList:[
           {
             type:'folder',
@@ -259,6 +275,7 @@
         showVideoPlay:false,
         showUploadAside:false,
         showShareDialog: false,
+        showDecompressDialog:false,
       }
     },
 
@@ -281,8 +298,10 @@
       },
       /*新建文件夹*/
       newFolderPushToFileList(){
+        let d = new Date();
+        var time=d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes();
         this.renameFileName = '新建文件夹';
-        this.fileList.unshift({fileName:'新建文件夹',size:'0',path:this.breadList[this.breadList.length-1].path,isDir:'文件夹',date:'',type:'folder'});
+        this.fileList.unshift({fileName:'新建文件夹',size:'0',path:this.breadList[this.breadList.length-1].path,isDir:'文件夹',time:time,type:'folder'});
         let filename = this.randomNum(4);
         this.fileList[0].path+=filename;
         this.$refs.fileSelection.clearSelection();
@@ -626,7 +645,27 @@
           .catch(function (err) {
             console.log(err)
           })
-      }
+      },
+      /*解压文件*/
+      decompressFile(){
+        this.$axios.post('/decompress', {
+          path:this.clickFile,
+        })
+          .then(function (res) {
+            if(res.data.status === '解压成功'){
+              this.showDecompressDialog = false;
+              this.drawMsg('success', res.data.result);
+              this.loadFileList();
+            }
+            else if(res.data.status === '解压失败') {
+              this.showDecompressDialog = false;
+              this.drawMsg('error', res.data.result);
+            }
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+          })
+      },
     },
     mounted(){
       /*console.log(this.breadList)*/

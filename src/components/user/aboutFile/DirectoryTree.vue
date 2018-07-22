@@ -38,7 +38,7 @@
         },
         data() {
           return {
-            rootPath:'/'+sessionStorage.getItem('username'),
+            rootPath:'/'+this.$cookie.get('username'),
             nowPath:'',
             showDialog:this.show,
             pathProp: {
@@ -50,7 +50,7 @@
             rootPathList:[{
               dirName:'全部文件',
               leaf:false,
-              path:'/'+sessionStorage.getItem('username')
+              path:'/'+this.$cookie.get('username')
 
             }],
             pathList:[],
@@ -125,9 +125,4 @@
     height: 20px;
   }
 
-</style>
-<style>
-  .el-tree-node__content {
-    height: 60px;
-  }
 </style>

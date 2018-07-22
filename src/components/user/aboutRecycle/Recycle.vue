@@ -5,6 +5,14 @@
       <el-button @click="recoveryFiles" icon="el-icon-refresh" class="clear">还原</el-button>
       <el-button @click="deleteFiles" icon="el-icon-tickets" class="clear">删除</el-button>
       <el-button @click="cleanRecycle" icon="el-icon-delete" class="clear">清空回收站</el-button>
+      <el-switch
+        style="display: block"
+        class="switch-timed"
+        v-model="isTimed"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        active-text="定时清空">
+      </el-switch>
     </div>
 
     <div class="load_num">
@@ -69,12 +77,13 @@
       name: "recycle",
         data(){
           return{
-            user:'/'+sessionStorage.getItem('username'),
+            user:'/'+this.$cookie.get('username'),
             recycleList:[],
             hoverFilePath:'',
             fileSelection:[],
             clickID:0,
-            clickIDs:[]
+            clickIDs:[],
+            isTimed:false
           }
         },
         methods:{
@@ -246,6 +255,21 @@
         },
         mounted(){
           this.loadRecycleList();
+        },
+        watch:{
+          isTimed:function () {
+            if(this.isTimed === true)
+              this.$axios.post('/timedEmptying',
+                {
+                  path:this.$cookie.get('username'),
+                })
+                .then(function (res) {
+                  this.drawMsg('success', '定时设置成功！');
+                }.bind(this))
+                .catch(function (err) {
+                  console.log(err)
+                })
+          }
         }
     }
 </script>
@@ -266,6 +290,11 @@
   .clear {
     float: right;
     margin-right: 5px;
+  }
+  .switch-timed {
+    width: 200px;
+    line-height: 40px;
+    height: 40px;
   }
 
   .load_num{

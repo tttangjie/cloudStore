@@ -15,48 +15,76 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
 axios.defaults.withCredentials = true;
 /*axios.defaults.timeout = 6000;*/
 
-Vue.use(Router);
 Vue.use(ElementUI);
 Vue.use(VueBlu);
 Vue.use(Vuex);
 Vue.use(VueCookie)
 
+export const constantRouterMap = [
+  {
+    path: '/',
+    name: 'Login',
+    component: (resolve) => require(['../components/Login'], resolve)
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: (resolve) => require(['../components/Register'], resolve)
+  },
+  {
+    path: '/share/:id',
+    name: 'Share',
+    component: (reslove) => require(['../components/user/aboutShare/ShareLink'], reslove),
+  },
+
+]
+Vue.use(Router);
+
 export default new Router({
  /* mode: 'history',*/
-  routes: [
-    {
-      path: '/',
-      name: 'Login',
-      component: (resolve) => require(['../components/Login'], resolve)
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: (resolve) => require(['../components/Register'], resolve)
-    },
+  routes: constantRouterMap
+})
+
+
+ const userRoutes = [
     {
       path: '/home',
       name: 'Home',
+      meta:{
+        role:['user']
+      },
       component: (resolve) => require(['../components/user/Home'], resolve),
       children:[
         {
           path:'/home/all',
           name:'All',
+          meta:{
+            role:['user']
+          },
           component: (resolve) => require(['../components/user/aboutFile/AllFile'], resolve),
         },
         {
           path:'/home/recycle',
           name:'Recycle',
+          meta:{
+            role:['user']
+          },
           component: (resolve) => require(['../components/user/aboutRecycle/Recycle'], resolve),
         },
         {
           path:'/home/category',
           name:'Category',
+          meta:{
+            role:['user']
+          },
           component: (resolve) => require(['../components/user/aboutCategory/Category'], resolve),
         },
         {
           path:'/home/share',
           name:'MyShare',
+          meta:{
+            role:['user']
+          },
           component: (resolve) => require(['../components/user/aboutShare/MyShare'], resolve),
         }
       ]
@@ -64,45 +92,86 @@ export default new Router({
     {
       path: '/personal',
       name: 'Personal',
+      meta:{
+        role:['user']
+      },
       component: (reslove) => require(['../components/user/personalManagement/Personal'], reslove),
-    },
+    }
+  ];
+
+  const adminRoutes = [
     {
-      path: '/share/:id',
-      name: 'Share',
-      component: (reslove) => require(['../components/user/aboutShare/ShareLink'], reslove),
+      path: '/admin',
+      name: 'Admin',
+      meta:{
+        role:['admin']
+      },
+      component: (resolve) => require(['../components/admin/Admin'], resolve),
+      children:[
+        {
+          path: '/admin/dashboard',
+          name: 'Dashboard',
+          meta: {
+            role: ['admin']
+          },
+          component: (resolve) => require(['../components/admin/aboutDashboard/Dashboard'], resolve)
+        },
+        {
+          path: '/admin/users',
+          name: 'Users',
+          meta: {
+            role: ['admin']
+          },
+          component: (resolve) => require(['../components/admin/aboutUsers/Users'], resolve)
+        },
+        {
+          path: '/admin/info',
+          name: 'Info',
+          meta: {
+            role: ['admin']
+          },
+          component: (resolve) => require(['../components/admin/aboutInfo/Info'], resolve)
+        },
+        {
+          path: '/admin/region',
+          name: 'Region',
+          meta: {
+            role: ['admin']
+          },
+          component: (resolve) => require(['../components/admin/aboutEchars/userRegion'], resolve)
+        },
+        {
+          path: '/admin/age',
+          name: 'Age',
+          meta: {
+            role: ['admin']
+          },
+          component: (resolve) => require(['../components/admin/aboutEchars/userAge'], resolve)
+        },
+        {
+          path: '/admin/notice',
+          name: 'Notice',
+          meta: {
+            role: ['admin']
+          },
+          component: (resolve) => require(['../components/admin/aboutNotice/Notice'], resolve)
+        }
+      ]
     }
-  ]
-})
 
-/* Layout */
-import Layout from '../components/admin/layout/Layout'
-export const constantRouterMap = [
-  { path: '/404', component: () => import('../components/404'), hidden: true },
-
+  ];
+  const falseRoutes = [
   {
-    path: '/test',
-    component: Layout,
-    redirect: '/dashboard',
-    name: 'Dashboard',
-    hidden: true,
-    children: [{
-      path: 'dashboard',
-      component: () => import('../components/login')
-    }]
+    path:'/404',
+    component:(reslove) => require(['../components/404'], reslove),
   },
-
   {
-    path: '/nested',
-    component: Layout,
-    redirect: '/nested/menu1',
-    name: 'nested',
-    meta: {
-      title: 'nested',
-    }
-  },
-
-  { path: '*', redirect: '/404', hidden: true }
+    path:'*',
+    redirect:'/404'
+  }
 ]
+
+export {userRoutes, adminRoutes, falseRoutes}
 
 import qs from 'qs'
 

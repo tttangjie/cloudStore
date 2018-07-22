@@ -91,11 +91,48 @@
 
 
     <div style="height: 600px;background: blue;"></div>
+
+    <div>
+      <!--账号异常-->
+      <el-dialog
+        title="账号异常"
+        :visible.sync="showAbnormalDialog"
+        width="30%"
+        center>
+        <span>检测到您的账号异常，是否需要进行申诉？</span>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="showAbnormalDialog = false">取 消</el-button>
+          <el-button type="primary" @click="showAppealDialog  = true; showAbnormalDialog = false">确 定</el-button>
+        </span>
+      </el-dialog>
+
+      <!--申诉-->
+      <el-dialog
+        title="用户申诉"
+        :visible.sync="showAppealDialog"
+        width="50%">
+        <span>
+          <el-input
+            type="textarea"
+            :rows="5"
+            placeholder="请输入申诉内容"
+            v-model="appealContent">
+
+          </el-input>
+        </span>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="showAppealDialog = false">取 消</el-button>
+            <el-button type="primary" @click="submitAppeal">确 定</el-button>
+          </span>
+      </el-dialog>
+    </div>
   </div>
+
 
 </template>
 
 <script>
+  import {userRoutes, adminRoutes, falseRoutes} from "../router";
   export default {
         name: "login",
         data() {
@@ -115,6 +152,10 @@
             countDown:60, /*发送验证码60s倒计时*/
             canClick:true,
             btnContent:"发送",
+
+            showAppealDialog:false,
+            showAbnormalDialog:false,
+            appealContent:'',
           }
         },
         methods:{
@@ -173,20 +214,36 @@
                   'username':this.username,
                   'password':this.pwd,
                   'imageCode':this.imageCode,
-                  /*'remember-me':this.autoLogin,*/
               })
               .then(function (res) {
                 if ( res.data.code === 0) {
+                  if(res.data.state === '0'){
+                    this.showAbnormalDialog = true;
+                    this.username = res.data.username;
+                    return ;
+                  }
                   this.drawMsg('success', '登录成功！');
                   this.$store.state.token = res.data.Token;
                   this.$store.state.role = res.data.role;
                   this.$store.state.username = res.data.username;
                   this.$store.state.phone = res.data.tel;
                   sessionStorage.userToken =  this.$store.state.token;
-                  sessionStorage.setItem('username',this.$store.state.username);
-                  sessionStorage.setItem('phone', this.$store.state.phone);
                   this.$cookie.set('username', this.$store.state.username);
-                  this.$router.push('/home/all');
+                  this.$cookie.set('phone', this.$store.state.phone);
+
+                  this.$cookie.set('username', this.$store.state.username);
+                  if(res.data.role === '[ROLE_USER]'){
+                    this.$router.addRoutes(userRoutes);
+                    this.$cookie.set('role', 'user');
+                    this.$router.addRoutes(falseRoutes);
+                    this.$router.push('/home/all');
+                  }
+                  else if(res.data.role === '[ROLE_ADMIN]') {
+                    this.$router.addRoutes(adminRoutes);
+                    this.$cookie.set('role', 'admin');
+                    this.$router.addRoutes(falseRoutes);
+                    this.$router.push('/admin/dashboard');
+                  }
                 }
                 else if( res.data.code === 1) {
                   if(res.data.msg === "Bad credentials")
@@ -211,16 +268,32 @@
              })
               .then(function (res) {
                 if(res.data.code === 0) {
+                  if(res.data.state === '0'){
+                    this.showAbnormalDialog = true;
+                    this.username = res.data.username;
+                    return ;
+                  }
                   this.drawMsg('success', '登录成功！');
                   this.$store.state.token = res.data.Token;
                   this.$store.state.role = res.data.role;
                   this.$store.state.username = res.data.username;
                   this.$store.state.phone = res.data.tel;
                   sessionStorage.userToken =  this.$store.state.token;
-                  sessionStorage.setItem('username',this.$store.state.username);
-                  sessionStorage.setItem('phone', this.$store.state.phone);
                   this.$cookie.set('username', this.$store.state.username);
-                  this.$router.push('/home/all');
+                  this.$cookie.set('phone', this.$store.state.phone);
+
+                  if(res.data.role === '[ROLE_USER]'){
+                    this.$router.addRoutes(userRoutes);
+                    this.$cookie.set('role', 'user');
+                    this.$router.addRoutes(falseRoutes);
+                    this.$router.push('/home/all');
+                  }
+                  else if(res.data.role === '[ROLE_ADMIN]') {
+                    this.$router.addRoutes(adminRoutes);
+                    this.$cookie.set('role', 'admin');
+                    this.$router.addRoutes(falseRoutes);
+                    this.$router.push('/admin/dashboard');
+                  }
                 }
                 else if (res.data.code === 1) {
                   this.drawMsg('error', '短信验证码错误');
@@ -268,8 +341,8 @@
                   this.sendMsg();
                 }
               }.bind(this))
-              .catch((function (res) {
-                console.log(res);
+              .catch((function (err) {
+                console.log(err);
               }))
           },
           changeImgCode() {
@@ -287,6 +360,29 @@
               }, 5)
             }
           },
+          submitAppeal() {
+            this.$axios.post('comSub',
+              {
+                username:this.username,
+                cominfo:this.appealContent,
+              })
+              .then(function (res) {
+                this.showAppealDialog = false;
+                if(res.data === '申诉成功，请耐心等候')
+                  this.drawMsg('success', res.data);
+                else if(res.data === '已经申诉过了，请稍后再试')
+                  this.drawMsg('warning', res.data);
+                else if(res.data === '您之前提交的申诉审核失败,请重新申诉') {
+                  this.drawMsg('warning', res.data);
+                }
+              }.bind(this))
+              .catch(function (err) {
+                console.log(err)
+              })
+          }
+        },
+        created() {
+          this.$cookie.delete('role')
         },
         beforeMount() {
           window.onresize = function() {
@@ -298,7 +394,6 @@
         mounted() {
           document.getElementById('login_body').style.height =this.bodyHeight;
           document.getElementById('setInputPWD').focus();
-
           this.$store.state.headImgFlag = true;
         },
 
@@ -428,5 +523,8 @@
   .alert_style {
     width: 30%;
     margin-left: 35%;
+  }
+  .appeal {
+    color: red;
   }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="share_link">
     <inputPWD
       v-if="showCheckPWD"
       :username="shareLink.username"
@@ -7,7 +7,7 @@
       v-on:getFileSuccess="getFileSuccess">
     </inputPWD>
 
-    <div v-if="!showCheckPWD">
+    <div v-show="!showCheckPWD">
       <el-header>
         <home_header> </home_header>
       </el-header>
@@ -31,17 +31,25 @@
                   icon="el-icon-edit-outline"
                   type="primary"
                   @click="checkShowTreeDialog"
-                  v-show="shareLink.username === nowUsername">
+                  v-show="shareLink.username !== nowUsername">
                   保存到网盘
                 </el-button>
                 <el-button
                   icon="el-icon-remove-outline"
                   @click="showCancelShareDialog = true"
-                  v-show="shareLink.username !== nowUsername">
+                  v-show="shareLink.username === nowUsername">
                   取消分享
                 </el-button>
-                <el-button icon="el-icon-download" @click="downloadFiles">
+                <el-button
+                  icon="el-icon-download"
+                  @click="downloadFiles">
                   下载
+                </el-button>
+                <el-button
+                  v-show="shareLink.username !== nowUsername"
+                  icon="el-icon-phone-outline"
+                  @click="report">
+                  举报
                 </el-button>
               </el-col>
             </el-row>
@@ -75,13 +83,14 @@
               size="mini"
 
               highlight-current-row
-              @selection-change="handleFileSelect">
+              @selection-change="handleFileSelect"
+              :default-sort = "{prop: 'time', order: 'descending'}">
               <el-table-column
                 type="selection"
                 width="55">
               </el-table-column>
               <el-table-column
-                prop="filename"
+                prop="fileName"
                 label="文件名"
                 sortable>
                 <template slot-scope="scope">
@@ -90,7 +99,7 @@
                       <img class="table_file_icon"
                            :src="require('../../../assets/file_icon/'+scope.row.type+'.png')">
                       <p class="table_file_name"
-                         @click="enterOrPreview(scope.row.path, scope.row.type, scope.row.filename)">{{ scope.row.filename }}</p>
+                         @click="enterOrPreview(scope.row.path, scope.row.type, scope.row.fileName)">{{ scope.row.fileName }}</p>
                     </el-col>
                   </el-row>
                 </template>
@@ -113,6 +122,7 @@
 
           <!--目录树-->
           <DirectoryTree
+            v-if="isLogin"
             :show="showTreeDialog"
             v-on:showTreeDialogFalse="showTreeDialog = false"
             v-on:confirmSelectPath="copyToMine">
@@ -131,6 +141,17 @@
                   <el-button type="primary" @click="cancelShare">确 定</el-button>
                </span>
               </el-dialog>
+            <el-dialog
+              title="举报用户"
+              :visible.sync="showReportDialog"
+              width="30%"
+              center>
+              <span>确定举报吗！？</span>
+              <span slot="footer" class="dialog-footer">
+                  <el-button @click="showReportDialog = false">取 消</el-button>
+                  <el-button type="primary" @click="report">确 定</el-button>
+               </span>
+            </el-dialog>
               <!--预览视频的Dialog-->
               <el-dialog
                 title="在线预览视频"
@@ -155,7 +176,7 @@
                 :close-on-press-escape=false
                 @close="deletePDF"
                 center>
-                <pdfView  :pdfurl="pdfurl"> </pdfView>
+                <pdfView  :pdfurl="pdfurl" v-if="showPDF"> </pdfView>
               </el-dialog>
           </div>
 
@@ -190,23 +211,23 @@
         },
         data(){
           return {
-            bodyHeight: document.documentElement.clientHeight-60,
-/*
+            bodyHeight: document.documentElement.clientHeight - 60,
             shareLink:{
               id:this.$route.params.id,
-              username:'',
+              username:'tj',
               fileList:[],
               shareName:'',
               shareTime:'',
               userIntro:'',
+              type:'folder',
             },
-*/
-            shareLink:{
+
+           /* shareLink:{
               id:this.$route.params.id,
               username:'tj',
               fileList:[
                 {
-                  filename:"testLink",
+                  fileName:"testLink",
                   owner:'victo',
                   path:"/tj/testLink",
                   size:'0 B',
@@ -219,11 +240,11 @@
               shareTime:'2018-07-19 09:37',
               userIntro:'HELLO VUE!',
               type:'folder',
-            },
+            },*/
             nowUsername:'',
             showCheckPWD:false,
             fileList:[],
-            rootPath:'/zlw',
+            rootPath:'',
             breadList:[{path:this.rootPath ,name:'全部文件'}],
             showBackToPre:false,
             fileSelection:[],
@@ -233,6 +254,8 @@
             showCancelShareDialog:false,
             showPDF:false,
             showVideoPlay:false,
+            showReportDialog:false,
+            isLogin:true,
           }
         },
         methods:{
@@ -252,11 +275,13 @@
               .then(function (res) {
                 if(res.data.code === 0) {
                   if(res.data.data.ifPasswd === 'yes') {
-                    this.showCheckPWD = true;
                     this.shareLink.username = res.data.data.shareUsername;
+                    this.showCheckPWD = true;
                   }
                   else {
+                    this.shareLink.username = res.data.data.username;
                     this.getFileSuccess(res.data.data);
+                    this.showCheckPWD = false;
                   }
                 }
               }.bind(this))
@@ -270,6 +295,8 @@
             this.shareLink.shareName = res.shareName;
             this.shareLink.shareTime = res.shareTime;
             this.shareLink.userIntro  = res.userIntro;
+            this.shareLink.rootPath = res.fatherPath;
+            this.shareLink.type = res.type;
             this.showCheckPWD = false;
             this.fileList = this.shareLink.fileList;
           },
@@ -297,7 +324,6 @@
               muluName:this.breadList[this.breadList.length-1].path,
             })
               .then(function (res) {
-                console.log(res)
                 this.fileList = res.data.result;
               }.bind(this))
               .catch(function (err) {
@@ -380,7 +406,10 @@
           },
           /*移动到自己的网盘*/
           checkShowTreeDialog(){
-            if(this.fileSelection.length<1)
+            if(this.$cookie.get('username') === null) {
+              this.drawMsg('error', '请先登录！')
+            }
+            else if(this.fileSelection.length<1)
               this.drawMsg('warning', '请先选择文件！')
             else
               this.showTreeDialog = true
@@ -427,23 +456,41 @@
                 console.log(err)
               })
           },
+          /*举报*/
+          report(){
+            this.$axios.post('/home/share/report',
+              {
+                id:this.shareLink.id
+              })
+              .then(function (res) {
+                if(res.data.code === 0) {
+                  this.drawMsg('success', '举报成功！')
+                }
+              }.bind(this))
+              .catch(function (err) {
+                console.log(err)
+              })
+          },
         },
+      created(){
+        if(this.$cookie.get('username') === null) {
+          this.isLogin = false;
+        }
+      },
       beforeMount(){
         window.onresize = function () {
           this.bodyHeight = document.documentElement.clientHeight-60;
-          if(document.getElementById('share_contain') != null) {
+          if(document.getElementById('share_link') != null) {
+            document.getElementById('share_link').style.height =(this.bodyHeight+60) + "px";
             document.getElementById('share_contain').style.height = this.bodyHeight + "px";
           }
         }
       },
         mounted(){
+          document.getElementById('share_link').style.height =(this.bodyHeight+60) + "px";
           document.getElementById('share_contain').style.height =this.bodyHeight + "px";
-
           this.nowUsername = this.$cookie.get('username');
-          /*this.loadLinkNeedPWD();*/
-          console.log(this.shareLink)
-          this.fileList = this.shareLink.fileList;
-
+          this.loadLinkNeedPWD();
         },
     }
 </script>
@@ -457,6 +504,7 @@
     padding: 10px 30px 0 30px;
     min-width: 1050px;
     color: #424e67;
+    height: 100%;
   }
   .share_info_box {
     border-top-left-radius: 8px;

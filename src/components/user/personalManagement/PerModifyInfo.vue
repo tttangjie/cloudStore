@@ -46,7 +46,7 @@
         data(){
           return{
             headImgRef:'',
-            username:sessionStorage.getItem('username'),
+            username:this.$cookie.get('username'),
             header: {
               'Content-Type':' multipart/form-data',
             },
@@ -54,7 +54,7 @@
             cityList:['北京','上海','天津','重庆','黑龙江', '辽宁','吉林', '河北',
                       '河南','山东','山西','陕西','安徽','浙江','江苏','福建',
                       '广东','海南','四川','云南','贵州','青海','甘肃','江西','台湾',
-                      '香港','澳门','内蒙古','宁夏','新疆','西藏','广西'],
+                      '香港','澳门','内蒙古','宁夏','新疆','西藏','广西','湖北','湖南'],
           }
         },
         methods:{

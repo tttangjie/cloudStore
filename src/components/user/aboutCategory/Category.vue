@@ -61,7 +61,8 @@
       @cell-mouse-enter="handleMouseEnter"
       @cell-mouse-leave="handleMouseLeave"
       @current-change="handleCurrentClick"
-      @cell-dblclick="enterOrPreview(clickFile, fileSelection[0].type, fileSelection[0].fileName)">
+      @cell-dblclick="enterOrPreview(clickFile, fileSelection[0].type, fileSelection[0].fileName)"
+      :default-sort = "{prop: 'time', order: 'descending'}">
       <el-table-column
         type="selection"
         width="55">
@@ -84,6 +85,7 @@
               </div>
             </el-col>
             <el-col :span="5" class="file_operate" v-show="hoverFilePath === scope.row.path">
+              <a @click="showDecompressDialog = true" v-show="scope.row.type === 'zip'"><i class="el-icon-news"></i></a>
               <a @click="showShareDialog = true"><i class="el-icon-share"></i></a>
               <a @click="downloadFile(scope.row.path, scope.row.type)"><i class="el-icon-download"></i></a>
               <el-dropdown trigger="click"  @command="handleMoreComment">
@@ -131,6 +133,19 @@
         </span>
       </el-dialog>
 
+      <!--解压的Dialog-->
+      <el-dialog
+        title="确认解压"
+        :visible.sync="showDecompressDialog"
+        width="30%"
+        center>
+        <span>确认解压文件吗？</span>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="showDecompressDialog = false">取 消</el-button>
+          <el-button type="primary" @click="decompressFile">确 定</el-button>
+        </span>
+      </el-dialog>
+
       <!--目录树的Dialog-->
       <DirectoryTree
         :show="showTreeDialog"
@@ -153,7 +168,7 @@
         :close-on-press-escape=false
         @close="deletePDF"
         center>
-        <pdf-view  :pdfurl="pdfurl"> </pdf-view>
+        <pdf-view  :pdfurl="pdfurl" v-if="showPDF"> </pdf-view>
       </el-dialog>
 
       <!--预览视频的Dialog-->
@@ -208,7 +223,7 @@
             },
             pdfurl:'',
             showTreeDialog:false,
-            username:sessionStorage.getItem('username'),
+            username:this.$cookie.get('username'),
             searchContent:'',
             fileTotal:0,
             fileList:[
@@ -243,6 +258,7 @@
             showVideoPlay:false,
             showUploadAside:false,
             showShareDialog: false,
+            showDecompressDialog:false,
           }
         },
         methods:{
@@ -311,11 +327,7 @@
               }
               window.location.href = this.GLOBAL.BASE_URL+'/downloadBatch?paths=' + postString;
             }
-            /*
-                    window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝'+  postString;
-            */
-            /*console.log(window.location.href = this.GLOBAL.BASE_URL+'/downloadFolder? jsonSrcName ＝'+  postString)*/
-          },
+            },
           /*文件选择触发的事件*/
           handleFileSelect(val){
             this.fileSelection = val;
@@ -534,7 +546,27 @@
               .catch(function (err) {
                 console.log(err)
               })
-          }
+          },
+          /*解压文件*/
+          decompressFile(){
+            this.$axios.post('/decompress', {
+              path:this.clickFile,
+            })
+              .then(function (res) {
+                if(res.data.status === '解压成功'){
+                  this.showDecompressDialog = false;
+                  this.drawMsg('success', res.data.result);
+                  this.loadFileList();
+                }
+                else if(res.data.status === '解压失败') {
+                  this.showDecompressDialog = false;
+                  this.drawMsg('error', res.data.result);
+                }
+              }.bind(this))
+              .catch(function (err) {
+                console.log(err)
+              })
+          },
         },
 
 

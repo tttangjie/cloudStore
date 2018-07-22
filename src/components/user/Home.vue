@@ -34,8 +34,8 @@
 
 <style scoped>
   .el-header {
-    padding: 0;
-  }
+     padding: 0;
+   }
   .el-main{
     padding: 0;
     min-width: 1050px;

@@ -28,7 +28,8 @@
       @cell-mouse-enter="handleMouseEnter"
       @cell-mouse-leave="handleMouseLeave"
       @current-change="handleCurrentClick"
-      @cell-dblclick="">
+      @cell-dblclick=""
+      :default-sort = "{prop: 'time', order: 'descending'}">
       <el-table-column type="expand">
         <template slot-scope="scope">
           <div class="link_class">
@@ -129,7 +130,6 @@
           loadFileList(){
             this.$axios.post('/home/share/all')
               .then(function (res) {
-                console.log(res)
                 if(res.data.code === 0) {
                   this.fileList = res.data.data;
                 }

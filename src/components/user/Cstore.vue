@@ -9,7 +9,7 @@
             @open="handleOpen"
             @close="handleClose">
             <el-menu-item index="all" route="/home/all">
-              <i class="el-icon-document"></i>
+              <i class="el-icon-document"> </i>
               <span slot="title">全部文件</span>
             </el-menu-item>
             <div class="file-group">
