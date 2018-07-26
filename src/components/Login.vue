@@ -1,5 +1,9 @@
 <template>
   <div class="cont">
+    <video autoplay loop poster="" id="bgvid">
+      <source src="../assets/video/background_mp4.mp4" type="video/mp4">
+    </video>
+
     <el-row class="login_body" id="login_body" >
       <el-row class="login_head">
         <el-col :span="10" :offset="2" class="head_title">
@@ -46,7 +50,8 @@
                   class="input_code"
                   placeholder="验证码"
                   v-model="imageCode"
-                  name="imageCode">
+                  name="imageCode"
+                  @keyup.native.enter="login">
                 </el-input>
                 <!--使用后台存入session中随机生成的验证码-->
                 <img v-bind:src="this.GLOBAL.BASE_URL+'/code/image'" ref="imageCodeRef" @click="changeImgCode">
@@ -56,7 +61,7 @@
                   <el-col :span="14">
                     <el-checkbox name="remember-me" v-model="autoLogin" v-bind:value="autoLogin">下次自动登录</el-checkbox>
                   </el-col>
-                  <el-col :span="10"><p class="forget_pwd">忘记密码？</p></el-col>
+                  <el-col :span="10"><p class="forget_pwd" @click="jumpToForget">忘记密码？</p></el-col>
                 </el-row>
               </form>
             </el-tab-pane>
@@ -90,7 +95,42 @@
     </el-row>
 
 
-    <div style="height: 600px;background: blue;"></div>
+   <!-- <div class="info_body">
+      <div>
+        <p class="info_title"><span>-</span>智能化的上传管理<span>-</span></p>
+        <el-row class="info_body_block">
+          <el-col :span="8">
+            <div class="info_box"><p>分片上传</p></div>
+            <p class="info_intro">将一个大文件分割成多块，极大地提高大文件的上传速度。</p>
+          </el-col>
+          <el-col :span="8">
+            <div class="info_box"><p>断点续传</p></div>
+            <p class="info_intro">当网络问题导致传输错误时,可继续上传未传过的分片。</p>
+          </el-col>
+          <el-col :span="8">
+            <div class="info_box"><p>极速秒传</p></div>
+            <p class="info_intro">支持上传前做文件md5值验证，一致则可直接跳过。</p>
+          </el-col>
+        </el-row>
+      </div>
+      <div>
+        <p class="info_title"><span>-</span>稳定可靠的文件管理<span>-</span></p>
+        <el-row class="info_body_block">
+          <el-col :span="8">
+            <div class="info_box"><p>文件预览</p></div>
+            <p class="info_intro">支持一切office、图片、音频、视频文件在线预览。</p>
+          </el-col>
+          <el-col :span="8">
+            <div class="info_box"><p>加密分享</p></div>
+            <p class="info_intro">更加安全可靠的加密分享机制。</p>
+          </el-col>
+          <el-col :span="8">
+            <div class="info_box"><p>在线解压</p></div>
+            <p class="info_intro">无须VIP，多种压缩包在线解压。</p>
+          </el-col>
+        </el-row>
+      </div>
+    </div>-->
 
     <div>
       <!--账号异常-->
@@ -132,7 +172,8 @@
 </template>
 
 <script>
-  import {userRoutes, adminRoutes, falseRoutes} from "../router";
+  import {userRoutes, adminRoutes, falseRoutes, constantRouterMap} from "../router";
+  import router from '../router'
   export default {
         name: "login",
         data() {
@@ -161,6 +202,9 @@
         methods:{
           jumpToRegister(){
             this.$router.push('/register');
+          },
+          jumpToForget(){
+            this.$router.push('/forget');
           },
           drawMsg(type, content) {
             this.$message({
@@ -200,6 +244,31 @@
               }
             }, 1000)
           },
+          loginSuccess(res){
+            console.log(res)
+            this.$store.state.token = res.data.Token;
+            this.$store.state.role = res.data.role;
+            this.$store.state.username = res.data.username;
+            this.$store.state.phone = res.data.tel;
+            sessionStorage.userToken =  this.$store.state.token;
+
+            this.$cookie.set('isVIP', res.data.isVIP);
+            this.$cookie.set('username', this.$store.state.username);
+            this.$cookie.set('phone', this.$store.state.phone);
+
+            if(res.data.role === '[ROLE_USER]'){
+              this.$router.addRoutes(userRoutes);
+              this.$cookie.set('role', 'user');
+              this.$router.addRoutes(falseRoutes);
+              this.$router.push('/home/all');
+            }
+            else if(res.data.role === '[ROLE_ADMIN]') {
+              this.$router.addRoutes(adminRoutes);
+              this.$cookie.set('role', 'admin');
+              this.$router.addRoutes(falseRoutes);
+              this.$router.push('/admin/dashboard');
+            }
+          },
           /*发送登录请求*/
           login() {
             if(this.activeChoice === 'fromPWD') {
@@ -223,27 +292,7 @@
                     return ;
                   }
                   this.drawMsg('success', '登录成功！');
-                  this.$store.state.token = res.data.Token;
-                  this.$store.state.role = res.data.role;
-                  this.$store.state.username = res.data.username;
-                  this.$store.state.phone = res.data.tel;
-                  sessionStorage.userToken =  this.$store.state.token;
-                  this.$cookie.set('username', this.$store.state.username);
-                  this.$cookie.set('phone', this.$store.state.phone);
-
-                  this.$cookie.set('username', this.$store.state.username);
-                  if(res.data.role === '[ROLE_USER]'){
-                    this.$router.addRoutes(userRoutes);
-                    this.$cookie.set('role', 'user');
-                    this.$router.addRoutes(falseRoutes);
-                    this.$router.push('/home/all');
-                  }
-                  else if(res.data.role === '[ROLE_ADMIN]') {
-                    this.$router.addRoutes(adminRoutes);
-                    this.$cookie.set('role', 'admin');
-                    this.$router.addRoutes(falseRoutes);
-                    this.$router.push('/admin/dashboard');
-                  }
+                  this.loginSuccess(res);
                 }
                 else if( res.data.code === 1) {
                   if(res.data.msg === "Bad credentials")
@@ -274,26 +323,7 @@
                     return ;
                   }
                   this.drawMsg('success', '登录成功！');
-                  this.$store.state.token = res.data.Token;
-                  this.$store.state.role = res.data.role;
-                  this.$store.state.username = res.data.username;
-                  this.$store.state.phone = res.data.tel;
-                  sessionStorage.userToken =  this.$store.state.token;
-                  this.$cookie.set('username', this.$store.state.username);
-                  this.$cookie.set('phone', this.$store.state.phone);
-
-                  if(res.data.role === '[ROLE_USER]'){
-                    this.$router.addRoutes(userRoutes);
-                    this.$cookie.set('role', 'user');
-                    this.$router.addRoutes(falseRoutes);
-                    this.$router.push('/home/all');
-                  }
-                  else if(res.data.role === '[ROLE_ADMIN]') {
-                    this.$router.addRoutes(adminRoutes);
-                    this.$cookie.set('role', 'admin');
-                    this.$router.addRoutes(falseRoutes);
-                    this.$router.push('/admin/dashboard');
-                  }
+                  this.loginSuccess(res)
                 }
                 else if (res.data.code === 1) {
                   this.drawMsg('error', '短信验证码错误');
@@ -382,7 +412,8 @@
           }
         },
         created() {
-          this.$cookie.delete('role')
+          this.$cookie.delete('role');
+          router.options.routes = constantRouterMap;
         },
         beforeMount() {
           window.onresize = function() {
@@ -396,8 +427,6 @@
           document.getElementById('setInputPWD').focus();
           this.$store.state.headImgFlag = true;
         },
-
-
     }
 </script>
 
@@ -437,12 +466,27 @@
 /*
   登录页整体及左侧介绍相关样式
 */
+  video#bgvid {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -100;
+    background: url('../assets/video/background.png') no-repeat;
+    background-size: cover;
+  }
+  video {
+    display: block;
+  }
   .login_body {
-    background: url("../assets/login_back.jpg");
     min-width: 850px;
     overflow: hidden;
     min-height: 650px;
     width: 100%;
+
   }
   .login_title {
     position: relative;
@@ -526,5 +570,52 @@
   }
   .appeal {
     color: red;
+  }
+
+  .info_body {
+    width: 60%;
+    margin-left: 20%;
+  }
+  .info_title{
+    margin-top: 60px;
+    text-align: center;
+    color: #3c4441;
+    font-size: 24px;
+    height: 60px;
+    line-height: 60px;
+  }
+  .info_title span {
+    color: #409eff;
+    margin: 0 10px;
+    font-weight: 900;
+  }
+  .info_body_block {
+    margin-top: 30px;
+  }
+  .info_box{
+    width: 100px;
+    height: 100px;
+    border-radius: 180px;
+    background: rgba(64, 158, 255, 0.76);
+    margin: auto;
+    transform: scale(1);
+    transition: all 1s ease 0s;
+    -webkit-transform: scale(1);
+  }
+  .info_box:hover{
+    transform: scale(1.2);
+    transition: all 1s ease 0s;
+    -webkit-transform: scale(1.2);
+  }
+  .info_box p {
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+    color: white;
+    font-size: 18px;
+  }
+  .info_intro {
+    width: 150px;
+    margin:30px auto;
   }
 </style>

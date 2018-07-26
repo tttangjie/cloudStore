@@ -76,6 +76,7 @@
 
             <!--文件表格/文件表格-->
             <el-table
+              v-loading="previewLoading"
               ref="fileSelection"
               :data="fileList"
               tooltip-effect="dark"
@@ -84,6 +85,7 @@
 
               highlight-current-row
               @selection-change="handleFileSelect"
+              @current-change="handleCurrentClick"
               :default-sort = "{prop: 'time', order: 'descending'}">
               <el-table-column
                 type="selection"
@@ -162,11 +164,28 @@
                 :close-on-click-modal=false
                 :close-on-press-escape=false>
                   <span>
-                    <video width="960" height="720" controls>
+                    <video class="video_audio" v-if="showVideoPlay" controls>
                         <source v-bind:src='this.GLOBAL.BASE_URL + "/get/stream?fpath="+clickFile' type="video/mp4">
                     </video>
                   </span>
               </el-dialog>
+
+            <!--预览音乐的Dialog-->
+            <el-dialog
+              title="在线聆听音乐"
+              :visible.sync="showAudioPlay"
+              width="60%"
+              height="60%"
+              center
+              :close-on-click-modal=false
+              :close-on-press-escape=false>
+                <span v-if="showAudioPlay">
+                  <p class="music_name">{{fileSelection[0].fileName}}</p>
+                    <audio class="preview_music" controls>
+                      <source v-bind:src='this.GLOBAL.BASE_URL+"/get/stream?fpath="+clickFile' type="audio/mpeg">
+                  </audio>
+                </span>
+            </el-dialog>
 
               <!--预览PDF文件的Dialog-->
               <el-dialog
@@ -199,8 +218,8 @@
 <script>
     import InputPWD from './InputPWD'
     import home_header from '../HomeHeader'
-    import DirectoryTree from '../aboutFile/DirectoryTree'
-    import pdfView from '../aboutFile/PDFView'
+    import DirectoryTree from '../utils/DirectoryTree'
+    import pdfView from '../utils/PDFView'
     export default {
         name: "share-link",
         components:{
@@ -221,26 +240,6 @@
               userIntro:'',
               type:'folder',
             },
-
-           /* shareLink:{
-              id:this.$route.params.id,
-              username:'tj',
-              fileList:[
-                {
-                  fileName:"testLink",
-                  owner:'victo',
-                  path:"/tj/testLink",
-                  size:'0 B',
-                  time:"2018-07-19 09:37",
-                  len:0,
-                  type:'folder'
-                }
-              ],
-              shareName:'testLink',
-              shareTime:'2018-07-19 09:37',
-              userIntro:'HELLO VUE!',
-              type:'folder',
-            },*/
             nowUsername:'',
             showCheckPWD:false,
             fileList:[],
@@ -254,8 +253,10 @@
             showCancelShareDialog:false,
             showPDF:false,
             showVideoPlay:false,
+            showAudioPlay:false,
             showReportDialog:false,
             isLogin:true,
+            previewLoading:false,
           }
         },
         methods:{
@@ -274,6 +275,11 @@
               })
               .then(function (res) {
                 if(res.data.code === 0) {
+                  if(res.data.data === "deleteLink") {
+                    this.$router.push('/404');
+                    this.drawMsg('error', '链接不存在或已被删除！')
+                    return ;
+                  }
                   if(res.data.data.ifPasswd === 'yes') {
                     this.shareLink.username = res.data.data.shareUsername;
                     this.showCheckPWD = true;
@@ -290,6 +296,9 @@
               })
           },
           getFileSuccess(res){
+            if(res.info.length < 1 ) {
+              this.drawMsg('warning', '分享的文件已被删除！');
+            }
             this.shareLink.username = res.username;
             this.shareLink.fileList = res.info;
             this.shareLink.shareName = res.shareName;
@@ -353,11 +362,13 @@
               this.addBreadList(path, name);
             }
             else if(type === 'doc' || type === 'ppt' || type === 'txt' || type === 'code' ||  type === 'xls' || type === 'pdf' || type === 'img'){
+              this.previewLoading = true;
               this.$axios.post('/file2Pdf',
                 {
                   input:path
                 })
                 .then(function (res) {
+                  this.previewLoading = false;
                   this.pdfurl = res.data.result;
                   this.showPDF = true;
                 }.bind(this))
@@ -368,6 +379,9 @@
             }
             else if(type === 'video') {
               this.showVideoPlay = true;
+            }
+            else if(type === 'music') {
+              this.showAudioPlay = true;
             }
 
           },
@@ -385,7 +399,10 @@
           },
           /*下载文件*/
           downloadFiles(){
-            if(this.fileSelection.length < 1) {
+            if(this.$cookie.get('username') === null) {
+              this.drawMsg('error', '请先登录！')
+            }
+            else if(this.fileSelection.length < 1) {
               this.drawMsg('warning', '请先选择文件')
             }
             else if(this.fileSelection.length === 1) {
@@ -627,5 +644,22 @@
     word-wrap: break-word;
     word-break: break-all;
     overflow: hidden;
+  }
+
+  .video_audio {
+    width: 100%;
+    height: 450px;
+    overflow: hidden;
+  }
+  .preview_music {
+    width: 60%;
+    margin-left: 20%;
+    margin-top: 60px;
+  }
+  .music_name {
+    margin-top: 5%;
+    font-size: 18px;
+    width: 100%;
+    text-align: center;
   }
 </style>

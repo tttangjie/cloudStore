@@ -5,6 +5,7 @@ import VueBlu from 'vue-blu'
 import Vuex from 'vuex'
 import axios from  'axios'
 import VueCookie from 'vue-cookie'
+import VueQuillEditor from 'vue-quill-editor'
 import 'element-ui/lib/theme-chalk/index.css'
 import 'vue-blu/dist/css/vue-blu.min.css'
 
@@ -18,7 +19,8 @@ axios.defaults.withCredentials = true;
 Vue.use(ElementUI);
 Vue.use(VueBlu);
 Vue.use(Vuex);
-Vue.use(VueCookie)
+Vue.use(VueCookie);
+Vue.use(VueQuillEditor);
 
 export const constantRouterMap = [
   {
@@ -30,6 +32,11 @@ export const constantRouterMap = [
     path: '/register',
     name: 'Register',
     component: (resolve) => require(['../components/Register'], resolve)
+  },
+  {
+    path: '/forget',
+    name: 'Forget',
+    component: (resolve) => require(['../components/Forget'], resolve)
   },
   {
     path: '/share/:id',
@@ -155,7 +162,7 @@ export default new Router({
             role: ['admin']
           },
           component: (resolve) => require(['../components/admin/aboutNotice/Notice'], resolve)
-        }
+        },
       ]
     }
 

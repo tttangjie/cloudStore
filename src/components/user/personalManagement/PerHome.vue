@@ -68,10 +68,11 @@
 <script>
     export default {
         name: "per-home",
+        props:[ 'changeHeadImg'],
         data(){
           return{
             username:this.$cookie.get('username'),
-            isVIP:false,
+            isVIP:true,
             headImgRef:'',
             totalSpace:[],
             docSpace:[],
@@ -85,14 +86,19 @@
           getSpace(){
             this.$axios.post('/sort/capacity')
               .then(function (res) {
-                console.log(res);
                 if(res.data.code === 0) {
-                  this.totalSpace = res.data.data[5];
-                  this.docSpace = res.data.data[0];
-                  this.pictSpace = res.data.data[1];
-                  this.videoSpace = res.data.data[2];
-                  this.musicSpace = res.data.data[3];
-                  this.otherSpace = res.data.data[4]
+                  this.$cookie.set('isVIP', res.data.data.isVIP);
+                  if(this.$cookie.get('isVIP') === 'false')
+                    this.isVIP = false;
+                  else
+                    this.isVIP = true;
+                  this.$emit('changeVIPState', this.$cookie.get('isVIP'));
+                  this.totalSpace = res.data.data.dataList[5];
+                  this.docSpace = res.data.data.dataList[0];
+                  this.pictSpace = res.data.data.dataList[1];
+                  this.videoSpace = res.data.data.dataList[2];
+                  this.musicSpace = res.data.data.dataList[3];
+                  this.otherSpace = res.data.data.dataList[4];
                 }
               }.bind(this))
               .catch(function (err) {
@@ -103,6 +109,11 @@
         mounted(){
           this.getSpace();
         },
+        watch:{
+          changeHeadImg:function () {
+            this.$refs.headImgRef.src = this.$refs.headImgRef.src + '?';
+          }
+        }
     }
 </script>
 

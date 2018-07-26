@@ -35,8 +35,9 @@
       <div class="search_and_sort">
         <el-input
           placeholder="搜索您的文件"
-          v-model="searchContent">
-          <i slot="suffix" class="el-input__icon el-icon-search search_icon"></i>
+          v-model="searchContent"
+          @keyup.native.enter="searchFile">
+          <i slot="suffix" class="el-input__icon el-icon-search search_icon" @click="searchFile"></i>
         </el-input>
         <!--<i class="el-icon-sort sort_icon"></i>-->
         <i class="fa fa-reorder sort_icon"></i>
@@ -65,6 +66,7 @@
 
     <!--文件表格/文件表格-->
     <el-table
+      v-loading="previewLoading"
       ref="fileSelection"
       :data="fileList"
       tooltip-effect="dark"
@@ -183,14 +185,30 @@
         title="在线预览视频"
         :visible.sync="showVideoPlay"
         width="60%"
-        height="60%"
         center
         :close-on-click-modal=false
         :close-on-press-escape=false>
         <span>
-          <video width="960" height="720" controls>
+          <video class="video_audio" controls v-if="showVideoPlay">
               <source v-bind:src='this.GLOBAL.BASE_URL + "/get/stream?fpath="+clickFile' type="video/mp4">
           </video>
+        </span>
+      </el-dialog>
+
+      <!--预览音乐的Dialog-->
+      <el-dialog
+        title="在线聆听音乐"
+        :visible.sync="showAudioPlay"
+        width="60%"
+        height="60%"
+        center
+        :close-on-click-modal=false
+        :close-on-press-escape=false>
+        <span v-if="showAudioPlay">
+          <p class="music_name">{{fileSelection[0].fileName}}</p>
+            <audio class="preview_music" controls>
+              <source v-bind:src='this.GLOBAL.BASE_URL+"/get/stream?fpath="+clickFile' type="audio/mpeg">
+          </audio>
         </span>
       </el-dialog>
 
@@ -222,9 +240,9 @@
 </template>
 
 <script>
-  import DirectoryTree from './DirectoryTree'
-  import FileUpload from '../uploadFiles/fileUpload'
-  import ShareDialog from "./ShareDialog";
+  import DirectoryTree from '../utils/DirectoryTree';
+  import FileUpload from '../utils/fileUpload';
+  import ShareDialog from "../utils/ShareDialog";
   export default {
     name: "all-file",
     components:{
@@ -242,25 +260,7 @@
         /*fileList中的path 和 BreadList中的path不是同一个含义*/
         /*breadList:[{path:'/'+sessionStorage.getItem('username'),name:'全部文件'}],*/
         breadList:[{path:'/'+this.$cookie.get('username'),name:'全部文件'}],
-        fileList:[
-          {
-            type:'folder',
-            fileName:'file3',
-            path:'/file3',
-            isDir:'文件夹',
-            time:'2018-03-02',
-            len:0,
-            size:'0KB',
-          },
-          {
-            type:'doc',
-            fileName:'file4.doc',
-            path:'/file4.doc',
-            isDir:'文件',
-            time:'2015-01-03',
-            len:0,
-            size:'0KB'
-          }],
+        fileList:[],
         showBackToPre:false,
         hoverFilePath:'',   //鼠标进入时的文件路径
         clickFile:'',   //单个选中的文件
@@ -273,9 +273,11 @@
         showPDF:false ,
         moveOrCopy:'',
         showVideoPlay:false,
+        showAudioPlay:false,
         showUploadAside:false,
         showShareDialog: false,
         showDecompressDialog:false,
+        previewLoading:false,
       }
     },
 
@@ -531,11 +533,13 @@
           this.addBreadList(path, name);
         }
         else if(type === 'doc' || type === 'ppt' || type === 'txt' || type === 'code' ||  type === 'xls' || type === 'pdf' || type === 'img'){
+          this.previewLoading = true;
           this.$axios.post('/file2Pdf',
             {
             input:path
           })
             .then(function (res) {
+              this.previewLoading = false;
               this.pdfurl = res.data.result;
               this.showPDF = true;
             }.bind(this))
@@ -546,6 +550,10 @@
         }
         else if(type === 'video') {
           this.showVideoPlay = true;
+
+        }
+        else if(type === 'music') {
+          this.showAudioPlay = true;
         }
 
       },
@@ -666,6 +674,18 @@
             console.log(err)
           })
       },
+      /*文件搜索*/
+      searchFile(){
+        this.$axios.post('/search/file', {
+          searchWord:this.searchContent,
+        })
+          .then(function (res) {
+            this.fileList = res.data.data;
+          }.bind(this))
+          .catch(function (err) {
+            console.log(err)
+          })
+      }
     },
     mounted(){
       /*console.log(this.breadList)*/
@@ -801,6 +821,23 @@
     color: #606266;
     display: inline-block;
     margin: 0 10px;
+  }
+
+  .video_audio {
+    width: 100%;
+    height: 450px;
+    overflow: hidden;
+  }
+  .preview_music {
+    width: 60%;
+    margin-left: 20%;
+    margin-top: 60px;
+  }
+  .music_name {
+    margin-top: 5%;
+    font-size: 18px;
+    width: 100%;
+    text-align: center;
   }
 
 </style>

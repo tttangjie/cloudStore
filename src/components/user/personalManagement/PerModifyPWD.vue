@@ -66,7 +66,7 @@
         data(){
           return{
             activeStep:0,
-            phone:sessionStorage.getItem('phone'),
+            phone:this.$cookie.get('phone'),
             msgCode:'',
             phoneVerify:{
               btnContent:'发送',

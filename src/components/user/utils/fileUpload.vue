@@ -139,6 +139,7 @@
                     path:this.uploadPath,
                     fileName:file.name,
                     username:this.username,
+                    fileSize:file.size,
                   },
                   success: function (data) {
                     let status = data.status.value;

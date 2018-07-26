@@ -8,7 +8,8 @@ import {store} from "./vuex/store";
 import global_ from '../static/config/global'
 import axios from "axios/index";
 
-import PDFView from './components/user/aboutFile/PDFView'
+import PDFView from './components/user/utils/PDFView'
+import cookie from 'vue-cookie'
 
 Vue.config.productionTip = false;
 Vue.prototype.GLOBAL = global_;
@@ -24,4 +25,3 @@ new Vue({
   components: { App },
   template: '<App/>'
 })
-

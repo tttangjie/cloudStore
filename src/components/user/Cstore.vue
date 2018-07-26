@@ -13,7 +13,7 @@
               <span slot="title">全部文件</span>
             </el-menu-item>
             <div class="file-group">
-              <el-menu-item index="img" route="/home"><p>图片</p></el-menu-item>
+              <el-menu-item index="img" @click="jumpToTypePage('image')"><p>图片</p></el-menu-item>
               <el-menu-item index="text" @click="jumpToTypePage('text')"><p>文档</p></el-menu-item>
               <el-menu-item index="video"  @click="jumpToTypePage('video')"><p>视频</p></el-menu-item>
               <el-menu-item index="music"  @click="jumpToTypePage('music')"><p>音乐</p></el-menu-item>

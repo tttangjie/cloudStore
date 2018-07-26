@@ -66,9 +66,15 @@
           },
           handleAvatarSuccess(res, file) {
             this.$refs.headImgRef.src = this.$refs.headImgRef.src + '?';
+            this.$emit('modifyHeadImg');
           },
           beforeAvatarUpload(file) {
-            const isJPG = file.type === 'image/jpeg';
+            let isJPG;
+            if(file.type === 'image/jpeg' || file.type === 'image/png')
+              isJPG = true;
+            else
+              isJPG = false;
+            /*const isJPG = file.type === 'image/jpeg';*/
             const isLt3M = file.size / 1024 / 1024 < 3;
 
             if (!isJPG) {

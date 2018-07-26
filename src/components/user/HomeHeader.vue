@@ -23,7 +23,7 @@
     <div v-if="isLogin" class="head_tool_box">
       <el-dropdown class="head_info"  @command="dropDownCommend">
         <div class="el-dropdown-link head_dropdown">
-          <img class="head_img" v-bind:src="this.GLOBAL.BASE_URL+'/user/icon/get'" ref="headImgRef">
+          <img class="head_img" v-bind:src="this.GLOBAL.BASE_URL+'/user/icon/get'" ref="headImgHeadRef">
           <p class="head_username">{{ username }}</p>
           <img v-show="!isVIP" class="head_vip_icon" src="../../assets/icon_no_vip.png">
           <img v-show="isVIP" class="head_vip_icon" src="../../assets/icon_vip.png">
@@ -61,29 +61,38 @@
       </div>
     </div>
 
-
     <p class="login_or_register" v-if="!isLogin">
       <span class="login_register" @click="jumpToHeaderVue('/')">登录</span> | <span class="login_register" @click="jumpToHeaderVue('/register')">注册</span>
     </p>
+
   </el-row>
+
 </template>
 
 <script>
-    import ElRow from "element-ui/packages/row/src/row";
-
+    import { Notification } from 'element-ui';
     export default {
-      components: {ElRow},
       name: "home_header",
+      props:['VIPState', 'changeHeadImg'],
       data(){
         return{
           activeIndex:'cStore',
           username:this.$cookie.get('username'),
-          isVIP:false,
+          isVIP:true,
           headImgRef:'',
+          headImgHeadRef:'',
           isLogin:true,
+          htmlContent:'',
+          showTest:false,
         }
       },
       methods:{
+        changeToVIP(){
+          if(this.$cookie.get('isVIP') === 'false')
+            this.isVIP = false;
+          else
+            this.isVIP = true;
+        },
         jumpToHeaderVue(page) {
           this.$router.push(page)
         },
@@ -92,6 +101,18 @@
         },
         dropDownCommend(command){
           if(command === 'beVIP'){
+            this.$axios.get('./become/vip')
+              .then(function (res) {
+                this.htmlContent = res.data;
+
+                const div = document.createElement('div');
+                div.innerHTML = res.data;
+                document.body.appendChild(div);
+                document.forms[0].submit();
+              }.bind(this))
+              .catch(function (err) {
+                console.log(err)
+              })
 
           } else if(command === 'personal') {
               this.$router.push('/personal');
@@ -115,12 +136,50 @@
               })
           }
         },
+        changeHtml (html) {
+          return html
+            .replace(html ? /&(?!#?\w+;)/g : /&/g, '&amp;')
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, "\"")
+            .replace(/&#39;/g, "\'");
+        },
+
+        showNotice(msg) {
+          Notification({
+            title: '公告',
+            dangerouslyUseHTMLString: true,
+            message: msg,
+            duration: 0
+          });
+        },
       },
       mounted(){
+        this.changeToVIP();
         if(this.$cookie.get('username')===null){
           this.isLogin = false;
         }
+        else {
+          let socket = new SockJS(this.GLOBAL.BASE_URL+'/gs-guide-websocket');
+          let stompClient = Stomp.over(socket);
+          stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+            stompClient.subscribe('/topic/greetings', function (greeting) {
+              this.showNotice(this.changeHtml(JSON.parse(greeting.body).content));
+            }.bind(this));
+          }.bind(this));
+        }
+
       },
+      watch:{
+        VIPState:function () {
+          this.changeToVIP();
+        },
+        changeHeadImg:function () {
+          this.$refs.headImgHeadRef.src = this.$refs.headImgHeadRef.src + '?';
+          this.$refs.headImgRef.src = this.$refs.headImgRef.src + '?';
+        }
+      }
     }
 </script>
 
@@ -268,6 +327,11 @@
   }
   .login_register:hover{
     cursor: pointer;
+  }
+
+  .html_content {
+    width: 100%;
+    height: 300px;
   }
 
 </style>

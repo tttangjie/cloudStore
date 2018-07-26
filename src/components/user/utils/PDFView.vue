@@ -1,5 +1,5 @@
 <template>
-  <div class="cpdf">
+  <div class="cpdf" v-loading="pdfLoading">
     <div class="center">
       <div class="contor">
         <el-button @click="prev">上一页</el-button>
@@ -39,7 +39,7 @@
         },
       methods:{
         renderPage(num) { //渲染pdf
-          let vm = this
+          let vm = this;
           this.pageRendering = true;
           let canvas = document.getElementById('the-canvas')
           // Using promise to fetch the page
@@ -84,7 +84,7 @@
           this.queueRenderPage(this.pageNum)
         },
         prev() {//上一页
-          let vm = this
+          let vm = this;
           if(vm.pageNum <= 1) {
             return;
           }
@@ -124,7 +124,11 @@
           return id.getContext('2d');
         }
       },
+      created(){
+        this.pdfLoading = true;
+      },
       mounted(){
+        this.pdfLoading = false;
         this.initPdf();
       },
       watch:{

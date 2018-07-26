@@ -63,18 +63,7 @@
               })
           }
         },
-      beforeMount(){
-        window.onresize = function () {
-          this.bodyHeight = window.innerHeight + "px";
 
-          if(document.getElementById('input_pwd_contain') != null) {
-            document.getElementById('input_pwd_contain').style.height = this.bodyHeight;
-          }
-        }
-      },
-      mounted(){
-        document.getElementById('input_pwd_contain').style.height =this.bodyHeight;
-      },
     }
 </script>
 

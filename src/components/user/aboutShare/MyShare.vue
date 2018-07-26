@@ -35,7 +35,7 @@
           <div class="link_class">
             <p :id="'link'+scope.row.id">
               <span>链接：</span>
-              <a >{{GLOBAL.MY_URL+ '/#/share/' +scope.row.charId}}</a>
+              <a :href="GLOBAL.MY_URL+ '/#/share/' +scope.row.charId" target=”_blank”>{{GLOBAL.MY_URL+ '/#/share/' +scope.row.charId}}</a>
               <span v-if="scope.row.ifPasswd === 'yes'">密码：{{scope.row.passwd}}</span>
             </p>
             <el-button class="copyLink" :data-clipboard-target='"#link"+scope.row.id' @click="copyLink">复制</el-button>
@@ -96,24 +96,7 @@
       name: "my-share",
         data(){
           return{
-            fileList:[{
-              id:252,
-              charId: 'rozk8nxM',
-              shareName :'shw2等',
-              type:'folder',
-              passwd:'-1',
-              ifPasswd:'no',
-              time:'2018-03-02',
-            },
-              {
-                id:253,
-                charId: 'rozk8sss',
-                shareName :'testFilenam',
-                type:'folder',
-                passwd:'hEvq',
-                ifPasswd:'yes',
-                time:'2018-03-02',
-              }],
+            fileList:[],
             fileSelection:[],
             clickFile:'',
             hoverFileID:-1,
